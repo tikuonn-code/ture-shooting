@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Space Shooter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div id="score-display">SCORE: <span id="scoreValue">0</span></div>
+            <div id="level-display">LV <span id="levelValue">1</span></div>
+            <div id="exp-bar-container">
+                <div id="exp-bar-fill"></div>
+            </div>
+            
+            <div id="start-screen" class="screen active">
+                <h1>NEON SHOOTER</h1>
+                <p>PC: マウスで移動 (左クリックでレーザー)</p>
+                <p>スマホ: タップ＆ドラッグで移動 (ダブルタップでレーザー)</p>
+                <p class="sub-text">（通常弾は自動で発射します。レーザーは一度撃つとクールダウンがあります）</p>
+                <button id="start-btn" style="margin-bottom: 20px;">GAME START</button>
+                <button id="dict-btn" class="secondary-btn">POWER-UPS</button>
+            </div>
+            
+            <div id="dictionary-screen" class="screen">
+                <h2>図鑑 (POWER-UPS)</h2>
+                <div id="dict-container" class="powerup-options" style="overflow-y: auto; max-height: 60vh;">
+                    <!-- JSで動的に図鑑を生成します -->
+                </div>
+                <button id="dict-back-btn" style="margin-top: 20px;">BACK</button>
+            </div>
+            
+            <div id="level-up-screen" class="screen">
+                <h2>LEVEL UP!</h2>
+                <p>パワーアップを選択してください</p>
+                <div id="powerup-container" class="powerup-options">
+                    <!-- JSで動的にボタンを生成します -->
+                </div>
+            </div>
+
+            <div id="game-over-screen" class="screen">
+                <h2>GAME OVER</h2>
+                <p class="score-text">FINAL SCORE</p>
+                <p class="final-score"><span id="finalScore">0</span></p>
+                <button id="restart-btn" style="margin-bottom: 15px;">RETRY</button>
+                <button id="home-btn" class="secondary-btn">HOME</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

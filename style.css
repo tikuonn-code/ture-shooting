@@ -1,0 +1,246 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none; /* テキスト選択を無効化 */
+    -webkit-user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    background-color: #050510;
+    color: #fff;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden; /* スクロール防止 */
+    touch-action: none; /* スマホのデフォルトタッチアクション（スワイプバック等）を無効化 */
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #111122 0%, #000005 100%);
+}
+
+canvas {
+    display: block;
+    /* キャンバス自体はJSで全画面にリサイズします */
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* マウスイベントを下のキャンバスに透過させる */
+}
+
+#score-display {
+    position: absolute;
+    top: 30px;
+    left: 20px;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+    letter-spacing: 2px;
+    z-index: 10;
+}
+
+#level-display {
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0;
+    z-index: 10;
+}
+
+#exp-bar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 10;
+}
+
+#exp-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: #0f0;
+    box-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+    transition: width 0.1s linear;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 5, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    pointer-events: auto; /* UIのクリックは有効にする */
+    z-index: 20;
+}
+
+.screen.active {
+    display: flex;
+}
+
+h1 {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 0 0 10px #f0f, 0 0 20px #f0f, 0 0 40px #f0f, 0 0 80px #f0f;
+    text-align: center;
+    font-weight: 900;
+    letter-spacing: 4px;
+}
+
+h2 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 0 0 10px #f00, 0 0 20px #f00, 0 0 40px #f00;
+    font-weight: 900;
+    letter-spacing: 4px;
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #ddd;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.sub-text {
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 40px;
+}
+
+.score-text {
+    font-size: 1.5rem;
+    color: #0ff;
+    margin-bottom: 5px;
+    text-shadow: 0 0 10px #0ff;
+}
+
+.final-score {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 15px #0ff, 0 0 30px #0ff;
+    margin-bottom: 40px;
+}
+
+button {
+    padding: 15px 50px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    background: transparent;
+    border: 3px solid #0ff;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 15px #0ff inset, 0 0 20px #0ff;
+    transition: all 0.2s ease-out;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+button:hover {
+    background: rgba(0, 255, 255, 0.15);
+    box-shadow: 0 0 25px #0ff inset, 0 0 40px #0ff;
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 10px #0ff inset, 0 0 15px #0ff;
+}
+
+.secondary-btn {
+    padding: 10px 30px;
+    font-size: 1.2rem;
+    border-color: #f0f;
+    color: #f0f;
+    box-shadow: 0 0 10px #f0f inset, 0 0 15px #f0f;
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 0, 255, 0.15);
+    box-shadow: 0 0 20px #f0f inset, 0 0 30px #f0f;
+}
+
+.secondary-btn:active {
+    box-shadow: 0 0 5px #f0f inset, 0 0 10px #f0f;
+}
+
+/* パワーアップ選択用のコンテナ */
+.powerup-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.powerup-card {
+    background: rgba(0, 20, 40, 0.7);
+    border: 2px solid #0ff;
+    border-radius: 10px;
+    padding: 15px 20px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px #0ff inset, 0 0 10px rgba(0,255,255,0.3);
+    pointer-events: auto; /* UIのクリック有効 */
+}
+
+.powerup-card:hover {
+    background: rgba(0, 40, 80, 0.9);
+    transform: scale(1.02);
+    box-shadow: 0 0 20px #0ff inset, 0 0 20px rgba(0,255,255,0.8);
+}
+
+.powerup-title {
+    font-size: 1.3rem;
+    color: #0ff;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px #0ff;
+}
+
+.powerup-desc {
+    font-size: 0.9rem;
+    color: #ccc;
+    text-shadow: none;
+    text-align: left;
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 2.5rem; }
+    p { font-size: 1rem; }
+    button { padding: 12px 40px; font-size: 1.2rem; }
+    .powerup-title { font-size: 1.1rem; }
+    .powerup-desc { font-size: 0.8rem; }
+}
