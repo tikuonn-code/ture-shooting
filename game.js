@@ -78,7 +78,23 @@ let isBossActive = false;
 let boss = null;
 
 // コレクション管理
-let ownedItemIds = JSON.parse(localStorage.getItem('neonShooterCollection')) || [];
+let ownedItems = {};
+try {
+    let rawOwnedData = localStorage.getItem('neonShooterCollection');
+    if (rawOwnedData) {
+        let parsed = JSON.parse(rawOwnedData);
+        if (Array.isArray(parsed)) {
+            // 旧フォーマット（配列）からの移行
+            parsed.forEach(id => {
+                ownedItems[id] = (ownedItems[id] || 0) + 1;
+            });
+        } else {
+            ownedItems = parsed;
+        }
+    }
+} catch (e) {
+    ownedItems = {};
+}
 
 // 画面サイズをキャンバスに合わせる
 // 画面サイズをキャンバスに合わせる
@@ -1522,7 +1538,8 @@ function updateCollectionUI() {
     collectionContainer.innerHTML = '';
     
     GACHA_ITEMS.forEach(item => {
-        const isOwned = ownedItemIds.includes(item.id);
+        const count = ownedItems[item.id] || 0;
+        const isOwned = count > 0;
         const card = document.createElement('div');
         card.className = `collection-card ${isOwned ? 'unlocked rarity-' + item.rarity : ''}`;
         
@@ -1531,6 +1548,7 @@ function updateCollectionUI() {
                 <div class="item-icon">${item.icon}</div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-rarity" style="color:${getRarityColor(item.rarity)}">${item.rarity}</div>
+                <div class="item-count">×${count}</div>
             `;
             card.title = item.desc;
         } else {
@@ -1582,7 +1600,7 @@ function saveLuminous() {
 }
 
 function saveCollection() {
-    localStorage.setItem('neonShooterCollection', JSON.stringify(ownedItemIds));
+    localStorage.setItem('neonShooterCollection', JSON.stringify(ownedItems));
 }
 
 let isGachaAnimating = false;
@@ -1626,10 +1644,8 @@ async function executeGacha(count) {
         const item = possible[Math.floor(Math.random() * possible.length)];
         results.push(item);
 
-        // コレクションに追加
-        if (!ownedItemIds.includes(item.id)) {
-            ownedItemIds.push(item.id);
-        }
+        // コレクションに追加（カウントアップ）
+        ownedItems[item.id] = (ownedItems[item.id] || 0) + 1;
     }
     
     saveCollection();
