@@ -22,6 +22,12 @@ const dictContainer = document.getElementById('dict-container');
 const helpScreen = document.getElementById('help-screen');
 const helpBtn = document.getElementById('help-btn');
 const helpBackBtn = document.getElementById('help-back-btn');
+const collectionScreen = document.getElementById('collection-screen');
+const collectionBtn = document.getElementById('collection-btn');
+const collectionBackBtn = document.getElementById('collection-back-btn');
+const gachaScreen = document.getElementById('gacha-screen');
+const gachaBtn = document.getElementById('gacha-btn');
+const gachaBackBtn = document.getElementById('gacha-back-btn');
 
 // --- ゲームの状態変数 ---
 let animationId;
@@ -1148,6 +1154,28 @@ helpBtn.addEventListener('click', () => {
 
 helpBackBtn.addEventListener('click', () => {
     helpScreen.classList.remove('active');
+    startScreen.classList.add('active');
+});
+
+// コレクションボタン
+collectionBtn.addEventListener('click', () => {
+    startScreen.classList.remove('active');
+    collectionScreen.classList.add('active');
+});
+
+collectionBackBtn.addEventListener('click', () => {
+    collectionScreen.classList.remove('active');
+    startScreen.classList.add('active');
+});
+
+// ガチャボタン
+gachaBtn.addEventListener('click', () => {
+    startScreen.classList.remove('active');
+    gachaScreen.classList.add('active');
+});
+
+gachaBackBtn.addEventListener('click', () => {
+    gachaScreen.classList.remove('active');
     startScreen.classList.add('active');
 });
 

@@ -202,20 +202,50 @@ button:active {
 /* 右上のアイコンボタン */
 .icon-btn {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     padding: 0;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     border-color: #fff;
     color: #fff;
-    box-shadow: 0 0 10px #fff inset, 0 0 10px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px #fff inset, 0 0 10px rgba(255, 255, 255, 0.5);
     z-index: 30;
+    transition: all 0.2s ease-out;
+}
+
+.icon-btn.top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.icon-btn.bottom-left {
+    bottom: 30px;
+    left: 20px;
+    border-color: #0f0;
+    color: #0f0;
+    box-shadow: 0 0 10px #0f0 inset, 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.icon-btn.bottom-left:hover {
+    background: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 15px #0f0 inset, 0 0 20px rgba(0, 255, 0, 0.6);
+}
+
+.icon-btn.bottom-right {
+    bottom: 30px;
+    right: 20px;
+    border-color: #ff0;
+    color: #ff0;
+    box-shadow: 0 0 10px #ff0 inset, 0 0 10px rgba(255, 255, 0, 0.3);
+}
+
+.icon-btn.bottom-right:hover {
+    background: rgba(255, 255, 0, 0.1);
+    box-shadow: 0 0 15px #ff0 inset, 0 0 20px rgba(255, 255, 0, 0.6);
 }
 
 .icon-btn:hover {
@@ -253,6 +283,19 @@ button:active {
     margin-bottom: 0;
     color: #fff;
     font-size: 1.1rem;
+}
+
+/* 準備中表示 */
+.coming-soon {
+    text-align: center;
+    margin: 40px 0;
+}
+
+.coming-soon p {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff;
 }
 
 /* パワーアップ選択用のコンテナ */
