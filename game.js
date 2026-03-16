@@ -874,11 +874,14 @@ function updateTargetUI() {
     targetCountEl.innerText = `${currentTargetKills} / ${targetRequiredKills}`;
     
     // アイコンの形状設定
-    targetIcon.className = ''; // リセット
+    targetIcon.className = currentTargetType; // CSSクラス適用
     targetIcon.style.borderColor = getEnemyColor(currentTargetType);
-    
-    // 形状に合わせた簡易プレビュー（CSSクラス切り替え）
-    // （style.css に追加するためのクラス名を想定）
+}
+
+function spawnBoss() {
+    isBossActive = true;
+    boss = new Boss();
+    createBoostEffect("BOSS INCOMING!!");
 }
 
 function getEnemyColor(type) {
@@ -1494,7 +1497,7 @@ updateLuminousUI();
 drawBackground();
 
 // ブースト発生時の簡易演出
-function createBoostEffect() {
+function createBoostEffect(text = 'LUMINOUS BOOST!!') {
     const boostMsg = document.createElement('div');
     boostMsg.style.position = 'absolute';
     boostMsg.style.top = '50%';
@@ -1506,7 +1509,7 @@ function createBoostEffect() {
     boostMsg.style.textShadow = '0 0 20px #ff0, 0 0 40px #ff0';
     boostMsg.style.zIndex = '100';
     boostMsg.style.pointerEvents = 'none';
-    boostMsg.innerText = 'LUMINOUS BOOST!!';
+    boostMsg.innerText = text;
     boostMsg.style.animation = 'boostPopMsg 1.5s ease-out forwards';
     document.getElementById('ui-layer').appendChild(boostMsg);
 
