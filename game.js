@@ -28,10 +28,16 @@ const collectionBackBtn = document.getElementById('collection-back-btn');
 const gachaScreen = document.getElementById('gacha-screen');
 const gachaBtn = document.getElementById('gacha-btn');
 const gachaBackBtn = document.getElementById('gacha-back-btn');
+const luminousCount = document.getElementById('luminousCount');
+const gachaLuminousCount = document.getElementById('gachaLuminousCount');
+const gachaSingleBtn = document.getElementById('gacha-single-btn');
+const gachaMultiBtn = document.getElementById('gacha-multi-btn');
+const gachaResultArea = document.getElementById('gacha-result-area');
 
 // --- ゲームの状態変数 ---
 let animationId;
 let score = 0;
+let luminousMatter = parseInt(localStorage.getItem('luminousMatter')) || 0;
 let isGameOver = false;
 let isPlaying = false;
 let gameScale = 1.0; // スマホ/PCのスケーリング用
@@ -389,6 +395,38 @@ class Enemy {
                     enemies.push(child);
                 }
             }
+
+            // 発光体のドロップ判定（死亡時のみ）
+            this.dropLuminous();
+        }
+    }
+
+    // 発光体のドロップロジック
+    dropLuminous() {
+        let dropProb = 0;
+        // 色からタイプを判定し、指定の確率を設定
+        if (this.color === '#f04') dropProb = 0.0001; // Pink (Tank) -> 0.01%
+        else if (this.color === '#0af') dropProb = 0.01;   // Blue (Shooter) -> 1% (ご指定通り：赤1%だがコード上のShooterは青なのでこちらに適用)
+        else if (this.color === '#ff0' && this.type === 'speed') dropProb = 0.03; // Yellow/Speed (Redの代わりとして3%?)
+        else if (this.type === 'splitter') dropProb = 0.05; // Yellow (Splitter) -> 5%
+        else if (this.type === 'mini-splitter') dropProb = 0.05; // Purple (Mini-Splitter) -> 5%
+        else if (this.color === '#f0f') dropProb = 0.03; // Normal (Blue?) -> 3%
+        
+        // 元の指示の解釈: 
+        // ピンク(Tank系) 0.01% / 赤(Shooter?) 1% / 黄(Splitter) 5% / 青(Normal?) 3% / 紫(分裂時) 5%
+        // 現在のコードの色: tank=#f04(pink), shooter=#0af(blue), speed=#ff0(yellow), splitter=#a0f(purple), normal=#f0f(magenta/pink)
+        
+        // 指示に厳密に合わせるための再調整:
+        if (this.type === 'tank') dropProb = 0.0001; // ピンク 0.01%
+        if (this.type === 'shooter') dropProb = 0.01; // 赤(指示) -> シューター 1%
+        if (this.type === 'normal') dropProb = 0.03; // 青(指示) -> ノーマル 3%
+        if (this.type === 'splitter') dropProb = 0.05; // 黄色(指示) -> スプリッター 5%
+        if (this.type === 'mini-splitter') dropProb = 0.05; // 紫(指示) -> 分裂時 5%
+
+        if (Math.random() < dropProb) {
+            luminousMatter++;
+            updateLuminousUI();
+            saveLuminous();
         }
     }
 
@@ -742,6 +780,7 @@ function init() {
     scoreValue.innerText = score;
     levelValue.innerText = currentLevel;
     updateExpBar();
+    updateLuminousUI();
 
     isGameOver = false;
 
@@ -1178,6 +1217,51 @@ gachaBackBtn.addEventListener('click', () => {
     gachaScreen.classList.remove('active');
     startScreen.classList.add('active');
 });
+
+// ガチャロジック
+function updateLuminousUI() {
+    luminousCount.innerText = luminousMatter;
+    gachaLuminousCount.innerText = luminousMatter;
+    
+    // ボタンの活性・非活性制御
+    gachaSingleBtn.disabled = luminousMatter < 100;
+    gachaMultiBtn.disabled = luminousMatter < 1000;
+}
+
+function saveLuminous() {
+    localStorage.setItem('luminousMatter', luminousMatter);
+}
+
+function executeGacha(count) {
+    const cost = count === 1 ? 100 : 1000;
+    if (luminousMatter < cost) return;
+
+    luminousMatter -= cost;
+    saveLuminous();
+    updateLuminousUI();
+
+    // 結果の生成（仮）
+    gachaResultArea.innerHTML = '';
+    const tempItems = ['強化チップ', 'エナジーコア', 'ナノリペア', '拡張パーツ', '未知の残骸'];
+    const rarities = ['N', 'R', 'SR', 'SSR'];
+
+    for (let i = 0; i < count; i++) {
+        const item = tempItems[Math.floor(Math.random() * tempItems.length)];
+        const rarity = Math.random() < 0.05 ? 'SSR' : (Math.random() < 0.2 ? 'SR' : (Math.random() < 0.5 ? 'R' : 'N'));
+        
+        const itemEl = document.createElement('div');
+        itemEl.className = 'gacha-item';
+        itemEl.style.borderColor = rarity === 'SSR' ? '#ff0' : (rarity === 'SR' ? '#f0f' : (rarity === 'R' ? '#0ff' : '#fff'));
+        itemEl.innerText = `[${rarity}] ${item}`;
+        gachaResultArea.appendChild(itemEl);
+    }
+}
+
+gachaSingleBtn.addEventListener('click', () => executeGacha(1));
+gachaMultiBtn.addEventListener('click', () => executeGacha(10));
+
+// 初期UI更新
+updateLuminousUI();
 
 // 背景の初期描画用（プレイ前）
 function drawBackground() {

@@ -17,6 +17,9 @@
             <div id="exp-bar-container">
                 <div id="exp-bar-fill"></div>
             </div>
+            <div id="luminous-display">
+                <span class="icon">✨</span> <span id="luminousCount">0</span>
+            </div>
 
             <div id="start-screen" class="screen active">
                 <button id="help-btn" class="icon-btn top-right" title="操作方法">?</button>
@@ -49,9 +52,21 @@
 
             <div id="gacha-screen" class="screen">
                 <h2>GACHA</h2>
-                <div class="coming-soon">
-                    <p>準備中...</p>
-                    <p class="sub-text">今後のアップデートをお楽しみに！</p>
+                <div id="gacha-luminous-display">
+                    所持: <span id="gachaLuminousCount">0</span> ✨
+                </div>
+                <div id="gacha-result-area" class="gacha-results">
+                    <!-- ガチャ結果がここに表示されます -->
+                </div>
+                <div class="gacha-controls">
+                    <button id="gacha-single-btn" class="gacha-action-btn">
+                        <div class="cost">100 ✨</div>
+                        1回引く
+                    </button>
+                    <button id="gacha-multi-btn" class="gacha-action-btn">
+                        <div class="cost">1000 ✨</div>
+                        10回引く
+                    </button>
                 </div>
                 <button id="gacha-back-btn" style="margin-top: 20px;">BACK</button>
             </div>
