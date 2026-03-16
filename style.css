@@ -98,6 +98,26 @@ canvas {
     display: flex;
     align-items: center;
     gap: 5px;
+    transition: all 0.5s ease;
+}
+
+#luminous-display.boost-active {
+    color: #ff0;
+    text-shadow: 0 0 10px #ff0, 0 0 20px #ff0, 0 0 30px #f00;
+    animation: boostPulse 1s infinite alternate;
+    transform: scale(1.2);
+}
+
+@keyframes boostPulse {
+    from { filter: drop-shadow(0 0 5px #ff0); }
+    to { filter: drop-shadow(0 0 20px #ff0); }
+}
+
+@keyframes boostPopMsg {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
+    100% { transform: translate(-50%, -300%) scale(1.0); opacity: 0; }
 }
 
 .screen {

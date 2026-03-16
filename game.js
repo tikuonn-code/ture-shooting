@@ -38,6 +38,10 @@ const gachaResultArea = document.getElementById('gacha-result-area');
 let animationId;
 let score = 0;
 let luminousMatter = parseInt(localStorage.getItem('luminousMatter')) || 0;
+let isLuminousBoostActive = false;
+let luminousBoostTimer = 0;
+let luminousBoostDuration = 15000; // 15秒
+let lastBoostCheckScore = 0;
 let isGameOver = false;
 let isPlaying = false;
 let gameScale = 1.0; // スマホ/PCのスケーリング用
@@ -423,6 +427,11 @@ class Enemy {
         if (this.type === 'splitter') dropProb = 0.05; // 黄色(指示) -> スプリッター 5%
         if (this.type === 'mini-splitter') dropProb = 0.05; // 紫(指示) -> 分裂時 5%
 
+        // ブースト期間中は確率3倍
+        if (isLuminousBoostActive) {
+            dropProb *= 3;
+        }
+
         if (Math.random() < dropProb) {
             luminousMatter++;
             updateLuminousUI();
@@ -782,6 +791,10 @@ function init() {
     updateExpBar();
     updateLuminousUI();
 
+    isLuminousBoostActive = false;
+    luminousBoostTimer = 0;
+    lastBoostCheckScore = 0;
+
     isGameOver = false;
 
     // 初期位置をリセット
@@ -954,6 +967,16 @@ function animate(currentTime) {
     if (!isGameOver) {
         // --- 敵の生成 ---
         enemySpawnTimer += deltaTime;
+        
+        // ブーストタイマーの更新
+        if (isLuminousBoostActive) {
+            luminousBoostTimer -= deltaTime;
+            if (luminousBoostTimer <= 0) {
+                isLuminousBoostActive = false;
+                luminousCount.parentElement.classList.remove('boost-active');
+            }
+        }
+
         if (enemySpawnTimer > enemySpawnInterval) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
@@ -1083,6 +1106,19 @@ function animate(currentTime) {
                 // スコア加算
                 score += enemy.type === 'tank' ? 50 : (enemy.type === 'speed' ? 20 : 10);
                 scoreValue.innerText = score;
+
+                // スコア1000ごとにブースト判定
+                const currentThousand = Math.floor(score / 1000);
+                if (currentThousand > lastBoostCheckScore) {
+                    lastBoostCheckScore = currentThousand;
+                    // 20%の確率でブースト発生
+                    if (Math.random() < 0.2) {
+                        isLuminousBoostActive = true;
+                        luminousBoostTimer = luminousBoostDuration;
+                        luminousCount.parentElement.classList.add('boost-active');
+                        createBoostEffect();
+                    }
+                }
             }
         });
 
