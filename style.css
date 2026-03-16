@@ -170,6 +170,7 @@ p {
     margin-bottom: 40px;
 }
 
+/* 基本ボタン設定 */
 button {
     padding: 15px 50px;
     font-size: 1.5rem;
@@ -183,6 +184,10 @@ button {
     transition: all 0.2s ease-out;
     text-transform: uppercase;
     letter-spacing: 2px;
+    position: relative; /* 基本は相対 */
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
 button:hover {
@@ -196,6 +201,7 @@ button:active {
     box-shadow: 0 0 10px #0ff inset, 0 0 15px #0ff;
 }
 
+/* セカンダリボタン（POWER-UPS等） */
 .secondary-btn {
     padding: 10px 30px;
     font-size: 1.2rem;
@@ -209,26 +215,18 @@ button:active {
     box-shadow: 0 0 20px #f0f inset, 0 0 30px #f0f;
 }
 
-.secondary-btn:active {
-    box-shadow: 0 0 5px #f0f inset, 0 0 10px #f0f;
-}
-
-/* 右上のアイコンボタン */
+/* アイコンボタン（絶対配置） */
 .icon-btn {
-    position: absolute;
+    position: absolute !important;
     width: 50px;
     height: 50px;
     padding: 0;
     font-size: 1.6rem;
     border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     border-color: #fff;
     color: #fff;
     box-shadow: 0 0 10px #fff inset, 0 0 10px rgba(255, 255, 255, 0.5);
     z-index: 30;
-    transition: all 0.2s ease-out;
 }
 
 .icon-btn.top-right {
@@ -236,21 +234,21 @@ button:active {
     right: 20px;
 }
 
-/* メニュー用の大型ボタン */
+/* メニュー用大型ボタン（絶対配置） */
 .menu-btn {
-    position: absolute;
+    position: absolute !important;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 10px;
-    border-radius: 15px;
+    padding: 10px !important;
+    border-radius: 15px !important;
     background: rgba(0, 10, 20, 0.8);
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 30;
+    text-transform: none; /* ケースを保持 */
 }
 
-/* ガチャボタン：大きめの正方形 */
 .gacha-btn {
     bottom: 30px;
     right: 20px;
@@ -266,7 +264,6 @@ button:active {
     box-shadow: 0 0 25px #ff0 inset, 0 0 30px rgba(255, 255, 0, 0.8);
 }
 
-/* コレクションボタン：高さ半分 */
 .collection-btn {
     bottom: 30px;
     left: 20px;
@@ -274,11 +271,6 @@ button:active {
     height: 65px;
     border: 3px solid #0f0;
     box-shadow: 0 0 10px #0f0 inset, 0 0 10px rgba(0, 255, 0, 0.4);
-}
-
-.collection-btn .btn-label {
-    color: #0f0;
-    font-size: 1.2rem;
 }
 
 .collection-btn:hover {
@@ -301,6 +293,7 @@ button:active {
 
 .collection-btn .btn-label {
     color: #0f0;
+    font-size: 1.2rem;
 }
 
 .collection-btn .btn-icon {
