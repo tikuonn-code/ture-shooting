@@ -31,6 +31,7 @@ const gachaBackBtn = document.getElementById('gacha-back-btn');
 const luminousCount = document.getElementById('luminousCount');
 const gachaLuminousCount = document.getElementById('gachaLuminousCount');
 const gachaSingleBtn = document.getElementById('gacha-single-btn');
+const gachaMultiBtn = document.getElementById('gacha-multi-btn');
 const gachaResultArea = document.getElementById('gacha-result-area');
 const collectionContainer = document.getElementById('collection-container');
 const gachaHandle = document.getElementById('gacha-handle');
@@ -601,6 +602,171 @@ class EnemyProjectile {
             this.x > canvas.width + this.radius || this.y > canvas.height + this.radius) {
             this.markedForDeletion = true;
         }
+    }
+}
+
+// ボス敵
+class Boss {
+    constructor() {
+        this.width = 120 * gameScale;
+        this.height = 100 * gameScale;
+        this.x = canvas.width / 2;
+        this.y = -this.height; // 上から登場
+        this.targetY = 150 * gameScale; // この高さで止まる
+        this.color = '#f00'; // ボスは不気味な赤
+        this.hpMax = 50 + (currentLevel * 20);
+        this.hp = this.hpMax;
+        
+        this.velocity = { x: 2, y: 1 };
+        this.lastAttackTime = 0;
+        this.attackInterval = 2500;
+        this.attackPhase = 0;
+        
+        this.markedForDeletion = false;
+        this.isEntering = true;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        
+        // メインボディ
+        ctx.beginPath();
+        ctx.moveTo(0, -this.height/2);
+        ctx.lineTo(this.width/2, 0);
+        ctx.lineTo(0, this.height/2);
+        ctx.lineTo(-this.width/2, 0);
+        ctx.closePath();
+        
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = this.color;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        
+        // 内部コア
+        ctx.beginPath();
+        ctx.arc(0, 0, 20 * gameScale, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = '#fff';
+        ctx.stroke();
+        
+        // 腕（のようなパーツ）
+        ctx.lineWidth = 3;
+        const armWave = Math.sin(Date.now() / 500) * 20;
+        ctx.beginPath();
+        ctx.moveTo(-this.width/2, 0);
+        ctx.lineTo(-this.width/2 - 30, armWave);
+        ctx.moveTo(this.width/2, 0);
+        ctx.lineTo(this.width/2 + 30, -armWave);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+
+    update() {
+        if (this.isEntering) {
+            this.y += (this.targetY - this.y) * 0.05;
+            if (Math.abs(this.y - this.targetY) < 1) {
+                this.isEntering = false;
+                bossHpContainer.style.display = 'block';
+            }
+            return;
+        }
+
+        // 左右に移動
+        this.x += this.velocity.x;
+        if (this.x < this.width/2 + 20 || this.x > canvas.width - this.width/2 - 20) {
+            this.velocity.x *= -1;
+        }
+
+        // 攻撃パターン
+        const now = Date.now();
+        if (now - this.lastAttackTime > this.attackInterval) {
+            this.attack();
+            this.lastAttackTime = now;
+            this.attackPhase = (this.attackPhase + 1) % 3;
+        }
+
+        // HPバー更新
+        const hpPercent = (this.hp / this.hpMax) * 100;
+        bossHpFill.style.width = hpPercent + '%';
+    }
+
+    attack() {
+        switch (this.attackPhase) {
+            case 0: // 全方位 12弾
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2;
+                    enemyProjectiles.push(new EnemyProjectile(this.x, this.y, {
+                        x: Math.cos(angle) * 4,
+                        y: Math.sin(angle) * 4
+                    }));
+                }
+                break;
+            case 1: // 3連狙い撃ち
+                let count = 0;
+                const interval = setInterval(() => {
+                    if (!isPlaying || isGameOver) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                    enemyProjectiles.push(new EnemyProjectile(this.x, this.y, {
+                        x: Math.cos(angle) * 6,
+                        y: Math.sin(angle) * 6
+                    }));
+                    count++;
+                    if (count >= 3) clearInterval(interval);
+                }, 200);
+                break;
+            case 2: // 高速拡散弾
+                for (let i = -2; i <= 2; i++) {
+                    enemyProjectiles.push(new EnemyProjectile(this.x, this.y, {
+                        x: i * 1.5,
+                        y: 7
+                    }));
+                }
+                break;
+        }
+    }
+
+    takeDamage(amount) {
+        this.hp -= amount;
+        if (this.hp <= 0) {
+            this.die();
+        }
+    }
+
+    die() {
+        this.markedForDeletion = true;
+        isBossActive = false;
+        bossHpContainer.style.display = 'none';
+        
+        // 爆発エフェクト
+        for (let i = 0; i < 50; i++) {
+            particles.push(new Particle(this.x, this.y, this.color));
+        }
+
+        // 報酬
+        score += 2000;
+        scoreValue.innerText = score;
+        
+        // 大量ドロップ
+        luminousMatter += 20;
+        updateLuminousUI();
+        saveLuminous();
+
+        // 30秒間の10倍フィーバー！
+        isLuminousBoostActive = true;
+        luminousBoostTimer = 30000;
+        luminousCount.parentElement.classList.add('boost-active');
+        createBoostEffect("MEGA BOOST!! 30s");
+
+        // 次のターゲット設定
+        setupNewTarget();
     }
 }
 
