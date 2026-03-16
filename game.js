@@ -41,9 +41,6 @@ const targetIcon = document.getElementById('targetIcon');
 const targetCountEl = document.getElementById('targetCount');
 const bossHpContainer = document.getElementById('boss-hp-container');
 const bossHpFill = document.getElementById('boss-hp-fill');
-const collectionContainer = document.getElementById('collection-container');
-const gachaHandle = document.getElementById('gacha-handle');
-const gachaCapsuleDispense = document.getElementById('gacha-capsule-dispense');
 
 // ガチャアイテム定義
 const GACHA_ITEMS = [

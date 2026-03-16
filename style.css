@@ -123,10 +123,27 @@ canvas {
 }
 
 #targetIcon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border: 2px solid #fff;
-    /* JSで形状を更新 */
+    display: inline-block;
+    position: relative;
+    box-shadow: 0 0 5px #fff;
+}
+
+#targetIcon.normal { border-radius: 2px; }
+#targetIcon.speed { 
+    width: 0; height: 0; border: none;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 20px solid #ff0;
+}
+#targetIcon.tank { border-radius: 50%; width: 20px; height: 20px; border-width: 4px; }
+#targetIcon.shooter { transform: rotate(45deg); width: 16px; height: 16px; }
+#targetIcon.splitter {
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    background: #a0f;
+    border: none;
 }
 
 #targetCount {
