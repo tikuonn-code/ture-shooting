@@ -427,9 +427,9 @@ class Enemy {
         if (this.type === 'splitter') dropProb = 0.05; // 黄色(指示) -> スプリッター 5%
         if (this.type === 'mini-splitter') dropProb = 0.05; // 紫(指示) -> 分裂時 5%
 
-        // ブースト期間中は確率3倍
+        // ブースト期間中は確率10倍
         if (isLuminousBoostActive) {
-            dropProb *= 3;
+            dropProb *= 10;
         }
 
         if (Math.random() < dropProb) {
