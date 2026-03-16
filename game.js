@@ -31,8 +31,16 @@ const gachaBackBtn = document.getElementById('gacha-back-btn');
 const luminousCount = document.getElementById('luminousCount');
 const gachaLuminousCount = document.getElementById('gachaLuminousCount');
 const gachaSingleBtn = document.getElementById('gacha-single-btn');
-const gachaMultiBtn = document.getElementById('gacha-multi-btn');
 const gachaResultArea = document.getElementById('gacha-result-area');
+const collectionContainer = document.getElementById('collection-container');
+const gachaHandle = document.getElementById('gacha-handle');
+const gachaCapsuleDispense = document.getElementById('gacha-capsule-dispense');
+
+const targetDisplay = document.getElementById('target-display');
+const targetIcon = document.getElementById('targetIcon');
+const targetCountEl = document.getElementById('targetCount');
+const bossHpContainer = document.getElementById('boss-hp-container');
+const bossHpFill = document.getElementById('boss-hp-fill');
 const collectionContainer = document.getElementById('collection-container');
 const gachaHandle = document.getElementById('gacha-handle');
 const gachaCapsuleDispense = document.getElementById('gacha-capsule-dispense');
@@ -63,6 +71,13 @@ let lastBoostCheckScore = 0;
 let isGameOver = false;
 let isPlaying = false;
 let gameScale = 1.0; // スマホ/PCのスケーリング用
+
+// ボス・ターゲット関連
+let currentTargetType = 'normal';
+let currentTargetKills = 0;
+const targetRequiredKills = 10;
+let isBossActive = false;
+let boss = null;
 
 // コレクション管理
 let ownedItemIds = JSON.parse(localStorage.getItem('neonShooterCollection')) || [];
@@ -523,8 +538,11 @@ class Enemy {
         this.y += this.velocity.y * speedMod;
         this.angle += this.spinSpeed * speedMod;
 
+        // ボス出現中は通常の敵は積極的には攻撃してこないようにする（またはボスの邪魔をしない）
+        if (isBossActive) speedMod *= 0.5;
+
         // シューターの攻撃射撃ロジック
-        if (this.type === 'shooter' && !isGameOver) {
+        if (this.type === 'shooter' && !isGameOver && !isBossActive) {
             const now = Date.now();
             if (now - this.lastShootTime > this.shootInterval) {
                 const angle = Math.atan2(player.y - this.y, player.x - this.x);
@@ -812,11 +830,13 @@ function init() {
     updateExpBar();
     updateLuminousUI();
 
-    isLuminousBoostActive = false;
-    luminousBoostTimer = 0;
-    lastBoostCheckScore = 0;
-
     isGameOver = false;
+
+    // ターゲット初期化
+    setupNewTarget();
+    isBossActive = false;
+    boss = null;
+    bossHpContainer.style.display = 'none';
 
     // 初期位置をリセット
     targetPos = { x: canvas.width / 2, y: canvas.height - 100 };
@@ -840,8 +860,37 @@ function checkCollision(obj1, obj2) {
 
 // 爆発エフェクト生成
 function createExplosion(x, y, color) {
-    for (let i = 0; i < 15; i++) {
+    const pCount = isBossActive ? 25 : 15;
+    for (let i = 0; i < pCount; i++) {
         particles.push(new Particle(x, y, color));
+    }
+}
+
+function setupNewTarget() {
+    const types = ['normal', 'speed', 'tank', 'shooter', 'splitter'];
+    currentTargetType = types[Math.floor(Math.random() * types.length)];
+    currentTargetKills = 0;
+    updateTargetUI();
+}
+
+function updateTargetUI() {
+    targetCountEl.innerText = `${currentTargetKills} / ${targetRequiredKills}`;
+    
+    // アイコンの形状設定
+    targetIcon.className = ''; // リセット
+    targetIcon.style.borderColor = getEnemyColor(currentTargetType);
+    
+    // 形状に合わせた簡易プレビュー（CSSクラス切り替え）
+    // （style.css に追加するためのクラス名を想定）
+}
+
+function getEnemyColor(type) {
+    switch(type) {
+        case 'tank': return '#f04';
+        case 'speed': return '#ff0';
+        case 'shooter': return '#0af';
+        case 'splitter': return '#a0f';
+        default: return '#f0f';
     }
 }
 
@@ -998,11 +1047,17 @@ function animate(currentTime) {
             }
         }
 
-        if (enemySpawnTimer > enemySpawnInterval) {
+        if (!isBossActive && enemySpawnTimer > enemySpawnInterval) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
             // スコアに応じて出現間隔を短くする（難易度アップ）最小400ms
             enemySpawnInterval = Math.max(400, 1000 - (score * 5));
+        }
+
+        // ボスの更新
+        if (isBossActive && boss) {
+            boss.update();
+            boss.draw();
         }
 
         // --- 更新と描画 ---
@@ -1054,6 +1109,17 @@ function animate(currentTime) {
                 }
             }
 
+            // 自機とボスの衝突
+            if (!isGameOver && isBossActive && boss && checkCollision(player, boss)) {
+                if (player.shieldActive) {
+                    player.shieldActive = false;
+                    boss.takeDamage(5);
+                    createExplosion(player.x, player.y, '#0f0');
+                } else {
+                    triggerGameOver();
+                }
+            }
+
             // レーザーと敵の衝突
             if (player.isLaserActive && !enemy.markedForDeletion) {
                 if (enemy.x + enemy.radius > player.x - player.laserWidth / 2 &&
@@ -1063,6 +1129,14 @@ function animate(currentTime) {
 
                     // レーザーのダメージ判定（毎フレーム当たるので調整が必要だが、今は即死か大ダメージとする）
                     enemy.takeDamage(10); // レーザーは強力
+                }
+            }
+
+            if (player.isLaserActive && isBossActive && boss) {
+                // レーザー vs ボス (簡易的な短形当たり判定)
+                if (boss.x + boss.width/2 > player.x - player.laserWidth / 2 &&
+                    boss.x - boss.width/2 < player.x + player.laserWidth / 2) {
+                    boss.takeDamage(0.5); // ボスには持続ダメージとして少しずつ
                 }
             }
 
@@ -1108,10 +1182,20 @@ function animate(currentTime) {
                             }
                         }
 
-                        // 貫通弾でなければ削除
                         if (!proj.pierce) {
                             proj.markedForDeletion = true;
                         }
+                    }
+                }
+            });
+
+            // 弾 vs ボス
+            projectiles.forEach(proj => {
+                if (!proj.markedForDeletion && isBossActive && boss) {
+                    if (checkCollision(proj, boss)) {
+                        boss.takeDamage(proj.damage);
+                        if (!proj.pierce) proj.markedForDeletion = true;
+                        createExplosion(proj.x, proj.y, boss.color);
                     }
                 }
             });
@@ -1124,9 +1208,17 @@ function animate(currentTime) {
                 // 経験値ジェムをドロップ
                 expGems.push(new ExpGem(enemy.x, enemy.y, enemy.expValue));
 
-                // スコア加算
                 score += enemy.type === 'tank' ? 50 : (enemy.type === 'speed' ? 20 : 10);
                 scoreValue.innerText = score;
+
+                // ターゲット撃破判定
+                if (!isBossActive && enemy.type === currentTargetType) {
+                    currentTargetKills++;
+                    updateTargetUI();
+                    if (currentTargetKills >= targetRequiredKills) {
+                        spawnBoss();
+                    }
+                }
 
                 // スコア1000ごとにブースト判定
                 const currentThousand = Math.floor(score / 1000);
