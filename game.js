@@ -19,6 +19,9 @@ const dictScreen = document.getElementById('dictionary-screen');
 const dictBtn = document.getElementById('dict-btn');
 const dictBackBtn = document.getElementById('dict-back-btn');
 const dictContainer = document.getElementById('dict-container');
+const helpScreen = document.getElementById('help-screen');
+const helpBtn = document.getElementById('help-btn');
+const helpBackBtn = document.getElementById('help-back-btn');
 
 // --- ゲームの状態変数 ---
 let animationId;
@@ -33,7 +36,7 @@ let gameScale = 1.0; // スマホ/PCのスケーリング用
 function resizeCanvas() {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    
+
     // スケーリング：基準となる高さを 900px とし、それに対する比率でスケールを決定
     // これにより、解像度の高いPCでも小さいスマホでも、相対的なサイズ感が一定になる
     gameScale = h / 900;
@@ -47,14 +50,14 @@ function resizeCanvas() {
         // PCなどの横長画面の場合、最大幅を制限（縦長に見えるように）
         canvasW = Math.min(800, w * 0.8);
     }
-    
+
     canvas.width = canvasW;
     canvas.height = h;
-    
+
     // キャンバスを中央に配置するためのCSS調整
     canvas.style.position = 'absolute';
     canvas.style.left = `${(window.innerWidth - canvasW) / 2}px`;
-    
+
     // UIレイヤーの幅もキャンバスに合わせる
     const uiLayer = document.getElementById('ui-layer');
     if (uiLayer) {
@@ -75,7 +78,7 @@ class Player {
         this.x = canvas.width / 2;
         this.y = canvas.height - 100;
         this.color = '#0ff'; // ネオンシアン
-        
+
         // 射撃制御
         this.lastShotTime = 0;
         this.fireRate = 200; // ミリ秒間隔
@@ -85,18 +88,18 @@ class Player {
         this.pierce = false;
         this.homing = false;
         this.element = 'none'; // 'flame', 'frost', 'thunder'
-        
+
         // レーザー制御
         this.isLaserActive = false;
         this.laserDuration = 500; // 0.5秒間
         this.laserCooldown = 3000; // 3秒クールダウン
         this.lastLaserTime = 0;
         this.laserWidth = 30 * gameScale;
-        
+
         // その他の能力
         this.magnetRange = 150 * gameScale;
         this.speedFactor = 0.2;
-        
+
         // シールド
         this.shieldActive = false;
         this.shieldAngle = 0;
@@ -104,7 +107,7 @@ class Player {
 
     draw() {
         ctx.save();
-        
+
         // レーザーの描画
         if (this.isLaserActive) {
             ctx.beginPath();
@@ -127,7 +130,7 @@ class Player {
         // ネオン効果（グロー）
         ctx.shadowBlur = 20;
         ctx.shadowColor = this.color;
-        
+
         ctx.fillStyle = '#fff';
         ctx.fill();
         ctx.strokeStyle = this.color;
@@ -140,9 +143,9 @@ class Player {
             const sx = this.x + Math.cos(this.shieldAngle) * 40;
             const sy = this.y + Math.sin(this.shieldAngle) * 40;
             const sRadius = 8;
-            
+
             // 六角形シールド
-            for(let i=0; i<6; i++) {
+            for (let i = 0; i < 6; i++) {
                 ctx.lineTo(sx + sRadius * Math.cos(i * Math.PI / 3), sy + sRadius * Math.sin(i * Math.PI / 3));
             }
             ctx.closePath();
@@ -186,14 +189,14 @@ class Player {
         if (now - this.lastShotTime > this.fireRate) {
             // ショットタイプに応じて弾を生成
             if (this.shotType === 'single') {
-                projectiles.push(new Projectile(this.x, this.y - this.height / 2, {x:0, y:-10}));
+                projectiles.push(new Projectile(this.x, this.y - this.height / 2, { x: 0, y: -10 }));
             } else if (this.shotType === 'twin') {
-                projectiles.push(new Projectile(this.x - 10, this.y - this.height / 2, {x:0, y:-10}));
-                projectiles.push(new Projectile(this.x + 10, this.y - this.height / 2, {x:0, y:-10}));
+                projectiles.push(new Projectile(this.x - 10, this.y - this.height / 2, { x: 0, y: -10 }));
+                projectiles.push(new Projectile(this.x + 10, this.y - this.height / 2, { x: 0, y: -10 }));
             } else if (this.shotType === 'triple') {
-                projectiles.push(new Projectile(this.x, this.y - this.height / 2, {x:0, y:-10}));
-                projectiles.push(new Projectile(this.x - 10, this.y - this.height / 2, {x:-2, y:-9.8}));
-                projectiles.push(new Projectile(this.x + 10, this.y - this.height / 2, {x:2, y:-9.8}));
+                projectiles.push(new Projectile(this.x, this.y - this.height / 2, { x: 0, y: -10 }));
+                projectiles.push(new Projectile(this.x - 10, this.y - this.height / 2, { x: -2, y: -9.8 }));
+                projectiles.push(new Projectile(this.x + 10, this.y - this.height / 2, { x: 2, y: -9.8 }));
             }
             this.lastShotTime = now;
         }
@@ -220,15 +223,15 @@ class Projectile {
         this.pierce = player.pierce;
         this.homing = player.homing;
         this.element = player.element; // 'flame', 'frost', 'thunder'
-        
+
         // 属性による色の変化
         this.color = '#ff0'; // 基本はイエロー
         if (this.element === 'flame') this.color = '#f50';
         if (this.element === 'frost') this.color = '#8cf';
         if (this.element === 'thunder') this.color = '#ff5';
-        
+
         this.markedForDeletion = false;
-        
+
         // 貫通機能用（既に当てた敵のIDを記録するが、今回は簡易的に衝突時に処理）
         this.hitEnemies = new Set();
     }
@@ -237,11 +240,11 @@ class Projectile {
         ctx.save();
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        
+
         // ネオン効果
         ctx.shadowBlur = 10;
         ctx.shadowColor = this.color;
-        
+
         ctx.fillStyle = this.color;
         ctx.fill();
         ctx.restore();
@@ -253,9 +256,9 @@ class Projectile {
             let closest = null;
             let minDist = Infinity;
             enemies.forEach(e => {
-                if(e.markedForDeletion) return;
+                if (e.markedForDeletion) return;
                 const dist = Math.hypot(e.x - this.x, e.y - this.y);
-                if(dist < minDist) {
+                if (dist < minDist) {
                     minDist = dist;
                     closest = e;
                 }
@@ -277,9 +280,9 @@ class Projectile {
 
         this.x += this.velocity.x;
         this.y += this.velocity.y;
-        
+
         // 画面外に出たら削除フラグを立てる（X軸も考慮）
-        if (this.y < -this.radius || this.x < -this.radius || 
+        if (this.y < -this.radius || this.x < -this.radius ||
             this.x > canvas.width + this.radius || this.y > canvas.height + this.radius) {
             this.markedForDeletion = true;
         }
@@ -290,7 +293,7 @@ class Projectile {
 class Enemy {
     constructor(x, y, type = null) {
         const typeRand = Math.random();
-        
+
         if (type) {
             this.type = type;
         } else {
@@ -302,7 +305,7 @@ class Enemy {
         }
 
         // タイプに応じた初期設定
-        switch(this.type) {
+        switch (this.type) {
             case 'tank':
                 this.radius = (Math.random() * 10 + 25) * gameScale;
                 this.color = '#f04';
@@ -349,11 +352,11 @@ class Enemy {
         }
 
         this.x = x || Math.random() * (canvas.width - this.radius * 2) + this.radius;
-        this.y = y || -this.radius; 
-        
+        this.y = y || -this.radius;
+
         const baseSpeed = (40 * gameScale - this.radius) * 0.1;
         this.velocity = { x: (Math.random() - 0.5) * 2, y: baseSpeed * this.speedMultiplier + 1 };
-        
+
         this.markedForDeletion = false;
         this.angle = 0;
         this.spinSpeed = (Math.random() - 0.5) * 0.1;
@@ -367,7 +370,7 @@ class Enemy {
         this.damageFlash = 5;
         if (this.hp <= 0) {
             this.markedForDeletion = true;
-            
+
             // 分裂ロジック
             if (this.type === 'splitter') {
                 const count = Math.floor(Math.random() * 2) + 2; // 2-3体
@@ -387,9 +390,9 @@ class Enemy {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-        
+
         ctx.beginPath();
-        
+
         if (this.type === 'tank') {
             for (let i = 0; i < 6; i++) {
                 ctx.lineTo(this.radius * Math.cos(i * Math.PI / 3), this.radius * Math.sin(i * Math.PI / 3));
@@ -420,14 +423,14 @@ class Enemy {
 
         ctx.shadowBlur = 15;
         ctx.shadowColor = this.damageFlash > 0 ? '#fff' : this.color;
-        
+
         ctx.strokeStyle = this.damageFlash > 0 ? '#fff' : this.color;
         ctx.lineWidth = 3;
         ctx.stroke();
-        
+
         ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
         ctx.fill();
-        
+
         if (this.damageFlash > 0) this.damageFlash--;
 
         if (this.type === 'normal') {
@@ -458,13 +461,13 @@ class Enemy {
                 this.lastShootTime = now;
             }
         }
-        
+
         // 炎上ダメージ
         if (this.onFire > 0) {
             this.onFire--;
             if (this.onFire % 30 === 0) {
-                this.takeDamage(0.5); 
-                for(let i=0; i<3; i++) particles.push(new Particle(this.x, this.y, '#f50'));
+                this.takeDamage(0.5);
+                for (let i = 0; i < 3; i++) particles.push(new Particle(this.x, this.y, '#f50'));
             }
         }
         if (this.isFrozen > 0) this.isFrozen--;
@@ -504,8 +507,8 @@ class EnemyProjectile {
     update() {
         this.x += this.velocity.x;
         this.y += this.velocity.y;
-        
-        if (this.y < -this.radius || this.x < -this.radius || 
+
+        if (this.y < -this.radius || this.x < -this.radius ||
             this.x > canvas.width + this.radius || this.y > canvas.height + this.radius) {
             this.markedForDeletion = true;
         }
@@ -588,7 +591,7 @@ class ExpGem {
         // ゆっくり下に落ちる
         if (!this.magnetized) {
             this.y += 0.5;
-            
+
             // プレイヤーに一定距離（マグネット範囲）近づいたら引き寄せ開始
             const magnetRange = player.magnetRange; // パワーアップで広がる
             const dist = Math.hypot(player.x - this.x, player.y - this.y);
@@ -600,11 +603,11 @@ class ExpGem {
             const dx = player.x - this.x;
             const dy = player.y - this.y;
             const dist = Math.hypot(dx, dy);
-            
+
             this.speed += 0.5;
             this.x += (dx / dist) * this.speed;
             this.y += (dy / dist) * this.speed;
-            
+
             // 取得判定
             if (dist < player.width) {
                 this.markedForDeletion = true;
@@ -662,14 +665,14 @@ let playerPowerUps = {}; // { 'fire_rate': 1, 'twin': 1 } など取得済みレ�
 // --- 入力制御 (マウス & タッチ) ---
 
 function updateTargetObject(x, y) {
-    if(!isPlaying) return;
-    
+    if (!isPlaying) return;
+
     // キャンバスが中央揃えされている場合、マウスのX座標からキャンバスの左端のズレを引く
     const canvasRect = canvas.getBoundingClientRect();
     targetPos.x = x - canvasRect.left;
-    
+
     // 指で自機が隠れないように、少し上（-60px程度）にオフセットとしてずらす
-    targetPos.y = y - canvasRect.top - 60; 
+    targetPos.y = y - canvasRect.top - 60;
 }
 
 // PC用マウスイベント
@@ -696,8 +699,8 @@ window.addEventListener('touchmove', (e) => {
 }, { passive: false }); // passive: false にして preventDefault を有効化
 
 window.addEventListener('touchstart', (e) => {
-    if(!isPlaying) return; // UI操作の邪魔になるため、プレイ中のみ座標取得
-    
+    if (!isPlaying) return; // UI操作の邪魔になるため、プレイ中のみ座標取得
+
     // ダブルタップ検知（300ms以内）
     const now = Date.now();
     if (now - lastTouchTime < 300) {
@@ -725,24 +728,24 @@ function init() {
     currentExp = 0;
     currentLevel = 1;
     // 初回レベルアップに必要な経験値を20に設定
-    expToNextLevel = 20; 
-    
+    expToNextLevel = 20;
+
     // playerPowerUpsの初期化（リトライ用）
     playerPowerUps = {};
 
     scoreValue.innerText = score;
     levelValue.innerText = currentLevel;
     updateExpBar();
-    
+
     isGameOver = false;
-    
+
     // 初期位置をリセット
     targetPos = { x: canvas.width / 2, y: canvas.height - 100 };
     player.x = targetPos.x;
     player.y = targetPos.y;
     player.isLaserActive = false; // レーザー状態リセット
     player.lastLaserTime = 0;     // 最初から撃てる状態に
-    
+
     lastFrameTime = performance.now();
     enemySpawnTimer = 0;
 }
@@ -772,7 +775,7 @@ function updateExpBar() {
 function gainExp(amount) {
     currentExp += amount;
     updateExpBar();
-    
+
     if (currentExp >= expToNextLevel) {
         levelUp();
     }
@@ -783,20 +786,20 @@ function levelUp() {
     currentLevel++;
     // レベルが上がるごとに必要経験値を +50% (+1.5倍)
     expToNextLevel = Math.floor(expToNextLevel * 1.5);
-    
+
     levelValue.innerText = currentLevel;
     updateExpBar();
-    
+
     // ゲームを一時停止
     isPlaying = false;
-    
+
     // 選べるパワーアップをランダムに3つ抽出（最大レベルに達していないもの）
     const available = POWERUPS.filter(p => !playerPowerUps[p.id] || playerPowerUps[p.id] < p.maxLevel);
-    
+
     // シャッフルして3つ取得
     const shuffled = available.sort(() => 0.5 - Math.random());
     let choices = shuffled.slice(0, 3);
-    
+
     // もし選べるものが無ければ（全てカンスト）、ステータス回復などにする
     if (choices.length === 0) {
         // 仮でスコア付与など
@@ -815,13 +818,13 @@ function levelUp() {
         btn.className = 'powerup-card';
         const currentLvl = playerPowerUps[p.id] || 0;
         btn.innerHTML = `
-            <div class="powerup-title">${p.name} <span style="font-size:0.8rem; color:#aaa;">Lv ${currentLvl}→${currentLvl+1}</span></div>
+            <div class="powerup-title">${p.name} <span style="font-size:0.8rem; color:#aaa;">Lv ${currentLvl}→${currentLvl + 1}</span></div>
             <p class="powerup-desc">${p.desc}</p>
         `;
         btn.addEventListener('click', () => {
             applyPowerUp(p.id);
             levelUpScreen.classList.remove('active');
-            
+
             // 少し待ってから再開（連続クリック防止）
             setTimeout(() => {
                 isPlaying = true;
@@ -844,12 +847,12 @@ function applyPowerUp(id) {
     saveUnlockedPowerup(id);
 
     // 実際の効果適用
-    switch(id) {
+    switch (id) {
         case 'fire_rate': player.fireRate = Math.max(50, player.fireRate - 40); break;
         case 'twin': player.shotType = 'twin'; break;
         case 'triple': player.shotType = 'triple'; break;
         case 'pierce': player.pierce = true; break;
-        case 'big_shot': 
+        case 'big_shot':
             player.shotSize += 2;
             player.shotDamage += 1;
             break;
@@ -910,15 +913,15 @@ function animate(currentTime) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
             // スコアに応じて出現間隔を短くする（難易度アップ）最小400ms
-            enemySpawnInterval = Math.max(400, 1000 - (score * 5)); 
+            enemySpawnInterval = Math.max(400, 1000 - (score * 5));
         }
 
         // --- 更新と描画 ---
-        
+
         // 自機
         player.update(targetPos.x, targetPos.y);
         player.draw();
-        
+
         // 自動射撃
         player.shoot();
 
@@ -968,7 +971,7 @@ function animate(currentTime) {
                     enemy.x - enemy.radius < player.x + player.laserWidth / 2 &&
                     enemy.y + enemy.radius > 0 &&
                     enemy.y - enemy.radius < player.y - player.height / 2) {
-                    
+
                     // レーザーのダメージ判定（毎フレーム当たるので調整が必要だが、今は即死か大ダメージとする）
                     enemy.takeDamage(10); // レーザーは強力
                 }
@@ -982,7 +985,7 @@ function animate(currentTime) {
 
                         // 敵にダメージ
                         enemy.takeDamage(proj.damage);
-                        
+
                         // 属性効果
                         if (proj.element === 'flame') {
                             enemy.onFire = 120; // 120フレーム（約2秒）燃焼
@@ -996,7 +999,7 @@ function animate(currentTime) {
                             enemies.forEach(other => {
                                 if (other !== enemy && !other.markedForDeletion) {
                                     const d = Math.hypot(other.x - enemy.x, other.y - enemy.y);
-                                    if(d < minDist) { minDist = d; closest = other; }
+                                    if (d < minDist) { minDist = d; closest = other; }
                                 }
                             });
                             if (closest) {
@@ -1011,11 +1014,11 @@ function animate(currentTime) {
                                 ctx.shadowColor = '#ff5';
                                 ctx.stroke();
                                 ctx.restore();
-                                
+
                                 closest.takeDamage(proj.damage);
                             }
                         }
-                        
+
                         // 貫通弾でなければ削除
                         if (!proj.pierce) {
                             proj.markedForDeletion = true;
@@ -1028,10 +1031,10 @@ function animate(currentTime) {
             if (enemy.markedForDeletion && enemy.hp <= 0 && !isGameOver) {
                 // 爆発エフェクト
                 createExplosion(enemy.x, enemy.y, enemy.color);
-                
+
                 // 経験値ジェムをドロップ
                 expGems.push(new ExpGem(enemy.x, enemy.y, enemy.expValue));
-                
+
                 // スコア加算
                 score += enemy.type === 'tank' ? 50 : (enemy.type === 'speed' ? 20 : 10);
                 scoreValue.innerText = score;
@@ -1056,7 +1059,7 @@ function animate(currentTime) {
         enemies = enemies.filter(enemy => !enemy.markedForDeletion);
         particles = particles.filter(particle => !particle.markedForDeletion);
         expGems = expGems.filter(g => !g.markedForDeletion);
-        
+
         animationId = requestAnimationFrame(animate);
     } else {
         // ゲームオーバー後もパーティクルだけ描画を続ける
@@ -1076,7 +1079,7 @@ function animate(currentTime) {
 startBtn.addEventListener('click', () => {
     startScreen.classList.remove('active');
     init();
-    
+
     // ゲーム開始時に初期設定としてレベルアップ画面を表示させ、能力を1つ選ばせる
     // 一時的にEXPを水増しして疑似的にレベルアップ（初回ボーナス）
     currentExp = expToNextLevel;
@@ -1086,10 +1089,10 @@ startBtn.addEventListener('click', () => {
 restartBtn.addEventListener('click', () => {
     gameOverScreen.classList.remove('active');
     init();
-    
+
     // リトライ時も初回ボーナス付与
     currentExp = expToNextLevel;
-    gainExp(0); 
+    gainExp(0);
 });
 
 homeBtn.addEventListener('click', () => {
@@ -1103,10 +1106,10 @@ homeBtn.addEventListener('click', () => {
 dictBtn.addEventListener('click', () => {
     startScreen.classList.remove('active');
     dictScreen.classList.add('active');
-    
+
     dictContainer.innerHTML = '';
     const unlocked = JSON.parse(localStorage.getItem('neonShooterUnlockedPowerups')) || [];
-    
+
     POWERUPS.forEach(p => {
         const isUnlocked = unlocked.includes(p.id);
         const card = document.createElement('div');
@@ -1114,7 +1117,7 @@ dictBtn.addEventListener('click', () => {
         // クリックイベントは無効化（図鑑は見るだけ）
         card.style.cursor = 'default';
         card.style.transform = 'none';
-        
+
         if (!isUnlocked) {
             card.style.opacity = '0.5';
             card.style.filter = 'grayscale(100%)';
@@ -1134,6 +1137,17 @@ dictBtn.addEventListener('click', () => {
 
 dictBackBtn.addEventListener('click', () => {
     dictScreen.classList.remove('active');
+    startScreen.classList.add('active');
+});
+
+// ヘルプボタン
+helpBtn.addEventListener('click', () => {
+    startScreen.classList.remove('active');
+    helpScreen.classList.add('active');
+});
+
+helpBackBtn.addEventListener('click', () => {
+    helpScreen.classList.remove('active');
     startScreen.classList.add('active');
 });
 

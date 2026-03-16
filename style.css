@@ -2,18 +2,22 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    user-select: none; /* テキスト選択を無効化 */
+    user-select: none;
+    /* テキスト選択を無効化 */
     -webkit-user-select: none;
 }
 
-body, html {
+body,
+html {
     width: 100%;
     height: 100%;
     background-color: #050510;
     color: #fff;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    overflow: hidden; /* スクロール防止 */
-    touch-action: none; /* スマホのデフォルトタッチアクション（スワイプバック等）を無効化 */
+    overflow: hidden;
+    /* スクロール防止 */
+    touch-action: none;
+    /* スマホのデフォルトタッチアクション（スワイプバック等）を無効化 */
 }
 
 #game-container {
@@ -37,7 +41,8 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* マウスイベントを下のキャンバスに透過させる */
+    pointer-events: none;
+    /* マウスイベントを下のキャンバスに透過させる */
 }
 
 #score-display {
@@ -94,7 +99,8 @@ canvas {
     background: rgba(0, 0, 5, 0.8);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    pointer-events: auto; /* UIのクリックは有効にする */
+    pointer-events: auto;
+    /* UIのクリックは有効にする */
     z-index: 20;
 }
 
@@ -103,10 +109,10 @@ canvas {
 }
 
 h1 {
-    font-size: 4rem;
-    margin-bottom: 20px;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
     color: #fff;
-    text-shadow: 0 0 10px #f0f, 0 0 20px #f0f, 0 0 40px #f0f, 0 0 80px #f0f;
+    text-shadow: 0 0 10px #f0f, 0 0 20px #f0f, 0 0 40px #f0f;
     text-align: center;
     font-weight: 900;
     letter-spacing: 4px;
@@ -193,6 +199,62 @@ button:active {
     box-shadow: 0 0 5px #f0f inset, 0 0 10px #f0f;
 }
 
+/* 右上のアイコンボタン */
+.icon-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-color: #fff;
+    color: #fff;
+    box-shadow: 0 0 10px #fff inset, 0 0 10px rgba(255,255,255,0.5);
+    z-index: 30;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px #fff inset, 0 0 20px rgba(255,255,255,0.8);
+}
+
+/* ヘルプ画面のコンテンツ */
+.help-content {
+    width: 90%;
+    max-width: 500px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.help-item {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.help-item .device {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid #0ff;
+    border-radius: 4px;
+    color: #0ff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.help-item p {
+    margin-bottom: 0;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
 /* パワーアップ選択用のコンテナ */
 .powerup-options {
     display: flex;
@@ -210,14 +272,15 @@ button:active {
     cursor: pointer;
     text-align: left;
     transition: all 0.2s;
-    box-shadow: 0 0 10px #0ff inset, 0 0 10px rgba(0,255,255,0.3);
-    pointer-events: auto; /* UIのクリック有効 */
+    box-shadow: 0 0 10px #0ff inset, 0 0 10px rgba(0, 255, 255, 0.3);
+    pointer-events: auto;
+    /* UIのクリック有効 */
 }
 
 .powerup-card:hover {
     background: rgba(0, 40, 80, 0.9);
     transform: scale(1.02);
-    box-shadow: 0 0 20px #0ff inset, 0 0 20px rgba(0,255,255,0.8);
+    box-shadow: 0 0 20px #0ff inset, 0 0 20px rgba(0, 255, 255, 0.8);
 }
 
 .powerup-title {
@@ -237,10 +300,11 @@ button:active {
 }
 
 @media (max-width: 600px) {
-    h1 { font-size: 2.5rem; }
+    h1 { font-size: 2rem; margin-bottom: 30px; }
     h2 { font-size: 2.5rem; }
     p { font-size: 1rem; }
     button { padding: 12px 40px; font-size: 1.2rem; }
     .powerup-title { font-size: 1.1rem; }
     .powerup-desc { font-size: 0.8rem; }
+    .help-item p { font-size: 0.95rem; }
 }

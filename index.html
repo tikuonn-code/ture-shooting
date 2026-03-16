@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Neon Space Shooter</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
@@ -15,16 +17,30 @@
             <div id="exp-bar-container">
                 <div id="exp-bar-fill"></div>
             </div>
-            
+
             <div id="start-screen" class="screen active">
+                <button id="help-btn" class="icon-btn" title="操作方法">?</button>
                 <h1>NEON SHOOTER</h1>
-                <p>PC: マウスで移動 (左クリックでレーザー)</p>
-                <p>スマホ: タップ＆ドラッグで移動 (ダブルタップでレーザー)</p>
-                <p class="sub-text">（通常弾は自動で発射します。レーザーは一度撃つとクールダウンがあります）</p>
                 <button id="start-btn" style="margin-bottom: 20px;">GAME START</button>
                 <button id="dict-btn" class="secondary-btn">POWER-UPS</button>
             </div>
             
+            <div id="help-screen" class="screen">
+                <h2>HOW TO PLAY</h2>
+                <div class="help-content">
+                    <div class="help-item">
+                        <span class="device">PC</span>
+                        <p>マウスで移動 / 左クリックでレーザー</p>
+                    </div>
+                    <div class="help-item">
+                        <span class="device">スマホ</span>
+                        <p>ドラッグで移動 / ダブルタップでレーザー</p>
+                    </div>
+                    <p class="sub-text">（通常弾は自動で発射します。レーザーはクールダウンが必要です）</p>
+                </div>
+                <button id="help-back-btn" style="margin-top: 20px;">BACK</button>
+            </div>
+
             <div id="dictionary-screen" class="screen">
                 <h2>図鑑 (POWER-UPS)</h2>
                 <div id="dict-container" class="powerup-options" style="overflow-y: auto; max-height: 60vh;">
@@ -32,7 +48,7 @@
                 </div>
                 <button id="dict-back-btn" style="margin-top: 20px;">BACK</button>
             </div>
-            
+
             <div id="level-up-screen" class="screen">
                 <h2>LEVEL UP!</h2>
                 <p>パワーアップを選択してください</p>
@@ -52,4 +68,5 @@
     </div>
     <script src="game.js"></script>
 </body>
+
 </html>
