@@ -1260,8 +1260,8 @@ function updateLuminousUI() {
     gachaLuminousCount.innerText = luminousMatter;
     
     // ボタンの活性・非活性制御
-    gachaSingleBtn.disabled = luminousMatter < 100;
-    gachaMultiBtn.disabled = luminousMatter < 1000;
+    gachaSingleBtn.disabled = luminousMatter < 10;
+    gachaMultiBtn.disabled = luminousMatter < 100;
 }
 
 function saveLuminous() {
@@ -1269,7 +1269,7 @@ function saveLuminous() {
 }
 
 function executeGacha(count) {
-    const cost = count === 1 ? 100 : 1000;
+    const cost = count === 1 ? 10 : 100;
     if (luminousMatter < cost) return;
 
     luminousMatter -= cost;
