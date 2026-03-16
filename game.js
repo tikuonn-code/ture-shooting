@@ -33,6 +33,24 @@ const gachaLuminousCount = document.getElementById('gachaLuminousCount');
 const gachaSingleBtn = document.getElementById('gacha-single-btn');
 const gachaMultiBtn = document.getElementById('gacha-multi-btn');
 const gachaResultArea = document.getElementById('gacha-result-area');
+const collectionContainer = document.getElementById('collection-container');
+const gachaHandle = document.getElementById('gacha-handle');
+const gachaCapsuleDispense = document.getElementById('gacha-capsule-dispense');
+
+// ガチャアイテム定義
+const GACHA_ITEMS = [
+    { id: 'item_01', name: '強化チップ:β', rarity: 'N', icon: '💾', desc: '基本的な回路の一部' },
+    { id: 'item_02', name: 'エナジーコア:小', rarity: 'N', icon: '🔋', desc: '少量のエネルギー' },
+    { id: 'item_03', name: 'ナノリペアキット', rarity: 'N', icon: '🔧', desc: '微細な傷を修復する' },
+    { id: 'item_04', name: '未知の残骸', rarity: 'N', icon: '🧱', desc: '何かの部品のようだ' },
+    { id: 'item_05', name: '拡張バレル:A', rarity: 'R', icon: '🔫', desc: '射程を伸ばすパーツ' },
+    { id: 'item_06', name: '冷却水タンク', rarity: 'R', icon: '💧', desc: 'オーバーヒートを防ぐ' },
+    { id: 'item_07', name: '強化チップ:α', rarity: 'R', icon: '💿', desc: '高度な演算回路' },
+    { id: 'item_08', name: 'エナジーコア:大', rarity: 'SR', icon: '⚡', desc: '膨大なエネルギーの塊' },
+    { id: 'item_09', name: '高出力モーター', rarity: 'SR', icon: '⚙️', desc: '機動力を底上げする' },
+    { id: 'item_10', name: '量子プロセッサ', rarity: 'SSR', icon: '🌌', desc: '時空を超える演算能力' },
+    { id: 'item_11', name: '古の動力源', rarity: 'SSR', icon: '💎', desc: '伝説のエネルギー体' },
+];
 
 // --- ゲームの状態変数 ---
 let animationId;
@@ -45,6 +63,9 @@ let lastBoostCheckScore = 0;
 let isGameOver = false;
 let isPlaying = false;
 let gameScale = 1.0; // スマホ/PCのスケーリング用
+
+// コレクション管理
+let ownedItemIds = JSON.parse(localStorage.getItem('neonShooterCollection')) || [];
 
 // 画面サイズをキャンバスに合わせる
 // 画面サイズをキャンバスに合わせる
@@ -1236,7 +1257,41 @@ helpBackBtn.addEventListener('click', () => {
 collectionBtn.addEventListener('click', () => {
     startScreen.classList.remove('active');
     collectionScreen.classList.add('active');
+    updateCollectionUI();
 });
+
+function updateCollectionUI() {
+    collectionContainer.innerHTML = '';
+    
+    GACHA_ITEMS.forEach(item => {
+        const isOwned = ownedItemIds.includes(item.id);
+        const card = document.createElement('div');
+        card.className = `collection-card ${isOwned ? 'unlocked rarity-' + item.rarity : ''}`;
+        
+        if (isOwned) {
+            card.innerHTML = `
+                <div class="item-icon">${item.icon}</div>
+                <div class="item-name">${item.name}</div>
+                <div class="item-rarity" style="color:${getRarityColor(item.rarity)}">${item.rarity}</div>
+            `;
+            card.title = item.desc;
+        } else {
+            card.innerHTML = `
+                <div class="item-icon" style="filter: grayscale(1); opacity: 0.3;">❓</div>
+                <div class="item-name" style="color: #444;">???</div>
+                <div class="item-rarity">LOCKED</div>
+            `;
+        }
+        collectionContainer.appendChild(card);
+    });
+}
+
+function getRarityColor(rarity) {
+    if (rarity === 'SSR') return '#ff0';
+    if (rarity === 'SR') return '#f0f';
+    if (rarity === 'R') return '#0ff';
+    return '#fff';
+}
 
 collectionBackBtn.addEventListener('click', () => {
     collectionScreen.classList.remove('active');
@@ -1268,29 +1323,76 @@ function saveLuminous() {
     localStorage.setItem('luminousMatter', luminousMatter);
 }
 
-function executeGacha(count) {
+function saveCollection() {
+    localStorage.setItem('neonShooterCollection', JSON.stringify(ownedItemIds));
+}
+
+let isGachaAnimating = false;
+
+async function executeGacha(count) {
+    if (isGachaAnimating) return;
     const cost = count === 1 ? 10 : 100;
     if (luminousMatter < cost) return;
 
     luminousMatter -= cost;
     saveLuminous();
     updateLuminousUI();
-
-    // 結果の生成（仮）
+    
+    isGachaAnimating = true;
     gachaResultArea.innerHTML = '';
-    const tempItems = ['強化チップ', 'エナジーコア', 'ナノリペア', '拡張パーツ', '未知の残骸'];
-    const rarities = ['N', 'R', 'SR', 'SSR'];
+    
+    // アニメーション開始：ハンドル回転
+    gachaHandle.classList.add('rotating');
+    
+    // 1秒待機（ハンドルの回転に合わせて）
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    gachaHandle.classList.remove('rotating');
 
+    // 演出用カプセル排出（10連の場合は高速化するか、代表で1個出す）
+    gachaCapsuleDispense.classList.add('active');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    gachaCapsuleDispense.classList.remove('active');
+
+    // 結果の生成
+    const results = [];
     for (let i = 0; i < count; i++) {
-        const item = tempItems[Math.floor(Math.random() * tempItems.length)];
-        const rarity = Math.random() < 0.05 ? 'SSR' : (Math.random() < 0.2 ? 'SR' : (Math.random() < 0.5 ? 'R' : 'N'));
+        // レアリティ抽選
+        const rand = Math.random();
+        let rarity = 'N';
+        if (rand < 0.02) rarity = 'SSR';
+        else if (rand < 0.1) rarity = 'SR';
+        else if (rand < 0.3) rarity = 'R';
         
-        const itemEl = document.createElement('div');
-        itemEl.className = 'gacha-item';
-        itemEl.style.borderColor = rarity === 'SSR' ? '#ff0' : (rarity === 'SR' ? '#f0f' : (rarity === 'R' ? '#0ff' : '#fff'));
-        itemEl.innerText = `[${rarity}] ${item}`;
-        gachaResultArea.appendChild(itemEl);
+        // そのレアリティのアイテムから抽選
+        const possible = GACHA_ITEMS.filter(it => it.id.includes('item_') && it.rarity === rarity);
+        const item = possible[Math.floor(Math.random() * possible.length)];
+        results.push(item);
+
+        // コレクションに追加
+        if (!ownedItemIds.includes(item.id)) {
+            ownedItemIds.push(item.id);
+        }
     }
+    
+    saveCollection();
+
+    // 結果表示
+    results.forEach((item, index) => {
+        setTimeout(() => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'gacha-item';
+            itemEl.style.borderColor = getRarityColor(item.rarity);
+            itemEl.innerText = `${item.icon} [${item.rarity}] ${item.name}`;
+            gachaResultArea.appendChild(itemEl);
+            
+            // 全て表示し終わったらフラグ解除
+            if (index === results.length - 1) {
+                isGachaAnimating = false;
+            }
+        }, index * 100);
+    });
+    
+    if (count === 0) isGachaAnimating = false;
 }
 
 gachaSingleBtn.addEventListener('click', () => executeGacha(1));

@@ -43,9 +43,8 @@
             
             <div id="collection-screen" class="screen">
                 <h2>COLLECTION</h2>
-                <div class="coming-soon">
-                    <p>準備中...</p>
-                    <p class="sub-text">今後のアップデートをお楽しみに！</p>
+                <div id="collection-container" class="collection-list">
+                    <!-- 獲得したアイテムがここに表示されます -->
                 </div>
                 <button id="collection-back-btn" style="margin-top: 20px;">BACK</button>
             </div>
@@ -55,6 +54,27 @@
                 <div id="gacha-luminous-display">
                     所持: <span id="gachaLuminousCount">0</span> ✨
                 </div>
+
+                <!-- 巨大ガチャ機 -->
+                <div class="gacha-machine-container">
+                    <div class="gacha-machine-large">
+                        <div class="gacha-head-large">
+                            <div class="gacha-capsules-inner">
+                                <!-- 装飾用のカプセル（CSSで表現） -->
+                            </div>
+                        </div>
+                        <div class="gacha-body-large">
+                            <div id="gacha-handle" class="gacha-handle-large">
+                                <div class="handle-bar"></div>
+                                <div class="handle-center"></div>
+                            </div>
+                            <div class="gacha-exit">
+                                <div id="gacha-capsule-dispense" class="dispensed-capsule"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="gacha-result-area" class="gacha-results">
                     <!-- ガチャ結果がここに表示されます -->
                 </div>
