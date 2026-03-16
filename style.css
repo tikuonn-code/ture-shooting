@@ -222,30 +222,136 @@ button:active {
     right: 20px;
 }
 
-.icon-btn.bottom-left {
-    bottom: 30px;
-    left: 20px;
-    border-color: #0f0;
-    color: #0f0;
-    box-shadow: 0 0 10px #0f0 inset, 0 0 10px rgba(0, 255, 0, 0.3);
+/* メニュー用の大型ボタン */
+.menu-btn {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 15px;
+    background: rgba(0, 10, 20, 0.8);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 30;
 }
 
-.icon-btn.bottom-left:hover {
-    background: rgba(0, 255, 0, 0.1);
-    box-shadow: 0 0 15px #0f0 inset, 0 0 20px rgba(0, 255, 0, 0.6);
-}
-
-.icon-btn.bottom-right {
+/* ガチャボタン：大きめの正方形 */
+.gacha-btn {
     bottom: 30px;
     right: 20px;
-    border-color: #ff0;
-    color: #ff0;
-    box-shadow: 0 0 10px #ff0 inset, 0 0 10px rgba(255, 255, 0, 0.3);
+    width: 130px;
+    height: 130px;
+    border: 3px solid #ff0;
+    box-shadow: 0 0 15px #ff0 inset, 0 0 15px rgba(255, 255, 0, 0.4);
 }
 
-.icon-btn.bottom-right:hover {
+.gacha-btn:hover {
+    transform: scale(1.05);
     background: rgba(255, 255, 0, 0.1);
-    box-shadow: 0 0 15px #ff0 inset, 0 0 20px rgba(255, 255, 0, 0.6);
+    box-shadow: 0 0 25px #ff0 inset, 0 0 30px rgba(255, 255, 0, 0.8);
+}
+
+/* コレクションボタン：高さ半分 */
+.collection-btn {
+    bottom: 30px;
+    left: 20px;
+    width: 130px;
+    height: 65px;
+    border: 3px solid #0f0;
+    box-shadow: 0 0 10px #0f0 inset, 0 0 10px rgba(0, 255, 0, 0.4);
+    flex-direction: row;
+    gap: 10px;
+}
+
+.collection-btn:hover {
+    transform: scale(1.05);
+    background: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 20px #0f0 inset, 0 0 20px rgba(0, 255, 0, 0.8);
+}
+
+.btn-label {
+    font-size: 1rem;
+    font-weight: 900;
+    text-shadow: 0 0 5px currentColor;
+    letter-spacing: 1px;
+}
+
+.gacha-btn .btn-label {
+    margin-top: 8px;
+    color: #ff0;
+}
+
+.collection-btn .btn-label {
+    color: #0f0;
+}
+
+.collection-btn .btn-icon {
+    font-size: 1.5rem;
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+}
+
+/* ガチャ機イラスト (CSS) */
+.gacha-ill {
+    width: 50px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gacha-head {
+    width: 40px;
+    height: 35px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid #fff;
+    border-radius: 50% 50% 5px 5px;
+    position: relative;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.gacha-head::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+}
+
+.gacha-body {
+    width: 44px;
+    height: 25px;
+    background: #ff0;
+    border-radius: 2px 2px 8px 8px;
+    border: 2px solid #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+}
+
+.gacha-knob {
+    width: 12px;
+    height: 12px;
+    background: #444;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    position: relative;
+}
+
+.gacha-knob::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -2px;
+    width: 12px;
+    height: 2px;
+    background: #fff;
+    transform: translateY(-50%) rotate(45deg);
 }
 
 .icon-btn:hover {
@@ -350,4 +456,17 @@ button:active {
     .powerup-title { font-size: 1.1rem; }
     .powerup-desc { font-size: 0.8rem; }
     .help-item p { font-size: 0.95rem; }
+    
+    .gacha-btn {
+        width: 100px;
+        height: 100px;
+        bottom: 20px;
+    }
+    .collection-btn {
+        width: 100px;
+        height: 50px;
+        bottom: 20px;
+    }
+    .btn-label { font-size: 0.8rem; }
+    .gacha-ill { transform: scale(0.8); }
 }
