@@ -25,31 +25,41 @@ let animationId;
 let score = 0;
 let isGameOver = false;
 let isPlaying = false;
+let gameScale = 1.0; // スマホ/PCのスケーリング用
 
 // 画面サイズをキャンバスに合わせる
 // 画面サイズをキャンバスに合わせる
 // スマホ（縦長）以外の場合は、画面幅を制限して敵が極端に分散しないようにする
 function resizeCanvas() {
-    let w = window.innerWidth;
+    const w = window.innerWidth;
     const h = window.innerHeight;
     
-    // PCなどの横長画面の場合、最大幅を制限して中央に配置
-    if (w > h && w > 800) { // 幅の制限を少し緩める
-        w = Math.min(1000, w * 0.7); // 最大1000px、または画面幅の70%に広げる
+    // スケーリング：基準となる高さを 900px とし、それに対する比率でスケールを決定
+    // これにより、解像度の高いPCでも小さいスマホでも、相対的なサイズ感が一定になる
+    gameScale = h / 900;
+    if (w < 800) {
+        gameScale *= 1.2; // スマホでは少しだけ拡大して見やすくする
+    }
+
+    // プレイエリアの幅を決定
+    let canvasW = w;
+    if (w > 800) {
+        // PCなどの横長画面の場合、最大幅を制限（縦長に見えるように）
+        canvasW = Math.min(800, w * 0.8);
     }
     
-    canvas.width = w;
+    canvas.width = canvasW;
     canvas.height = h;
     
     // キャンバスを中央に配置するためのCSS調整
     canvas.style.position = 'absolute';
-    canvas.style.left = `${(window.innerWidth - w) / 2}px`;
+    canvas.style.left = `${(window.innerWidth - canvasW) / 2}px`;
     
     // UIレイヤーの幅もキャンバスに合わせる
     const uiLayer = document.getElementById('ui-layer');
     if (uiLayer) {
-        uiLayer.style.width = `${w}px`;
-        uiLayer.style.left = `${(window.innerWidth - w) / 2}px`;
+        uiLayer.style.width = `${canvasW}px`;
+        uiLayer.style.left = `${(window.innerWidth - canvasW) / 2}px`;
     }
 }
 window.addEventListener('resize', resizeCanvas);
@@ -60,8 +70,8 @@ resizeCanvas(); // 初期化
 // プレイヤー（自機）
 class Player {
     constructor() {
-        this.width = 30;
-        this.height = 30;
+        this.width = 30 * gameScale;
+        this.height = 30 * gameScale;
         this.x = canvas.width / 2;
         this.y = canvas.height - 100;
         this.color = '#0ff'; // ネオンシアン
@@ -70,7 +80,7 @@ class Player {
         this.lastShotTime = 0;
         this.fireRate = 200; // ミリ秒間隔
         this.shotType = 'single'; // 'single', 'twin', 'triple'
-        this.shotSize = 4;
+        this.shotSize = 4 * gameScale;
         this.shotDamage = 1;
         this.pierce = false;
         this.homing = false;
@@ -81,10 +91,10 @@ class Player {
         this.laserDuration = 500; // 0.5秒間
         this.laserCooldown = 3000; // 3秒クールダウン
         this.lastLaserTime = 0;
-        this.laserWidth = 30;
+        this.laserWidth = 30 * gameScale;
         
         // その他の能力
-        this.magnetRange = 150;
+        this.magnetRange = 150 * gameScale;
         this.speedFactor = 0.2;
         
         // シールド
@@ -252,14 +262,15 @@ class Projectile {
             });
             if (closest) {
                 const angle = Math.atan2(closest.y - this.y, closest.x - this.x);
-                // 現在の速度に少しずつ追尾方向のベクトルを足す
-                this.velocity.x += Math.cos(angle) * 0.8;
-                this.velocity.y += Math.sin(angle) * 0.8;
-                // 最大速度をクリップ（10）
-                const speed = Math.hypot(this.velocity.x, this.velocity.y);
-                if (speed > 10) {
-                    this.velocity.x = (this.velocity.x / speed) * 10;
-                    this.velocity.y = (this.velocity.y / speed) * 10;
+                // 追尾性能をさらに抑制（0.15 -> 0.07）して滑らかなカーブにする
+                this.velocity.x += Math.cos(angle) * 0.07;
+                this.velocity.y += Math.sin(angle) * 0.07;
+                // 最大速度をクリップ
+                const currentSpeed = Math.hypot(this.velocity.x, this.velocity.y);
+                const maxSpeed = 10;
+                if (currentSpeed > maxSpeed) {
+                    this.velocity.x = (this.velocity.x / currentSpeed) * maxSpeed;
+                    this.velocity.y = (this.velocity.y / currentSpeed) * maxSpeed;
                 }
             }
         }
@@ -277,62 +288,98 @@ class Projectile {
 
 // 敵
 class Enemy {
-    constructor() {
+    constructor(x, y, type = null) {
         const typeRand = Math.random();
         
-        if (typeRand < 0.2) {
-            // タンク型 (20%)
-            this.type = 'tank';
-            this.radius = Math.random() * 10 + 25; // 半径25〜35（大きめ）
-            this.color = '#f04'; // 赤・オレンジ系
-            this.hp = 5; // 何発か当てないと倒せない
-            this.speedMultiplier = 0.5; // 遅い
-            this.expValue = 5;
-        } else if (typeRand < 0.5) {
-            // スピード型 (30%)
-            this.type = 'speed';
-            this.radius = Math.random() * 5 + 15; // 半径15〜20（小さめ）
-            this.color = '#ff0'; // 黄色系など目立つ色
-            this.hp = 1;
-            this.speedMultiplier = 2.0; // 速い
-            this.expValue = 2;
+        if (type) {
+            this.type = type;
         } else {
-            // ノーマル型 (50%)
-            this.type = 'normal';
-            this.radius = Math.random() * 10 + 20; // 半径20〜30（元より少し大きめ）
-            this.color = '#f0f'; // ピンク系
-            this.hp = 2;
-            this.speedMultiplier = 1.0;
-            this.expValue = 1;
+            if (typeRand < 0.1) this.type = 'shooter'; // 10%で射撃型
+            else if (typeRand < 0.2) this.type = 'splitter'; // 10%で分裂型
+            else if (typeRand < 0.35) this.type = 'tank'; // 15%でタンク型
+            else if (typeRand < 0.6) this.type = 'speed'; // 25%でスピード型
+            else this.type = 'normal'; // 40%でノーマル型
         }
 
-        this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
-        this.y = -this.radius; // 画面上部外から
+        // タイプに応じた初期設定
+        switch(this.type) {
+            case 'tank':
+                this.radius = (Math.random() * 10 + 25) * gameScale;
+                this.color = '#f04';
+                this.hp = 5;
+                this.speedMultiplier = 0.5;
+                this.expValue = 5;
+                break;
+            case 'speed':
+                this.radius = (Math.random() * 5 + 15) * gameScale;
+                this.color = '#ff0';
+                this.hp = 1;
+                this.speedMultiplier = 2.0;
+                this.expValue = 2;
+                break;
+            case 'shooter':
+                this.radius = (Math.random() * 5 + 20) * gameScale;
+                this.color = '#0af'; // 青・水色系
+                this.hp = 2;
+                this.speedMultiplier = 0.7;
+                this.expValue = 4;
+                this.lastShootTime = 0;
+                this.shootInterval = 2000; // 2秒おき
+                break;
+            case 'splitter':
+                this.radius = (Math.random() * 5 + 23) * gameScale;
+                this.color = '#a0f'; // 紫系
+                this.hp = 3;
+                this.speedMultiplier = 0.6;
+                this.expValue = 6;
+                break;
+            case 'mini-splitter':
+                this.radius = (Math.random() * 3 + 10) * gameScale;
+                this.color = '#a0f';
+                this.hp = 1;
+                this.speedMultiplier = 1.2;
+                this.expValue = 1;
+                break;
+            default: // normal
+                this.radius = (Math.random() * 10 + 20) * gameScale;
+                this.color = '#f0f';
+                this.hp = 2;
+                this.speedMultiplier = 1.0;
+                this.expValue = 1;
+        }
+
+        this.x = x || Math.random() * (canvas.width - this.radius * 2) + this.radius;
+        this.y = y || -this.radius; 
         
-        // サイズとタイプに応じた速度
-        const baseSpeed = (40 - this.radius) * 0.1;
+        const baseSpeed = (40 * gameScale - this.radius) * 0.1;
         this.velocity = { x: (Math.random() - 0.5) * 2, y: baseSpeed * this.speedMultiplier + 1 };
         
         this.markedForDeletion = false;
-        
-        // 回転アニメーション用
         this.angle = 0;
         this.spinSpeed = (Math.random() - 0.5) * 0.1;
-
-        // ダメージを受けた時のフラグ（点滅用など）
         this.damageFlash = 0;
-        
-        // 状態異常
         this.onFire = 0;
         this.isFrozen = 0;
     }
 
     takeDamage(amount) {
         this.hp -= amount;
-        this.damageFlash = 5; // 5フレーム分白く光る
+        this.damageFlash = 5;
         if (this.hp <= 0) {
             this.markedForDeletion = true;
-            // 爆発とジェムのドロップはメインループで行う
+            
+            // 分裂ロジック
+            if (this.type === 'splitter') {
+                const count = Math.floor(Math.random() * 2) + 2; // 2-3体
+                for (let i = 0; i < count; i++) {
+                    const child = new Enemy(this.x, this.y, 'mini-splitter');
+                    // 放射状に飛ぶように調整
+                    const angle = (i / count) * Math.PI * 2;
+                    child.velocity.x = Math.cos(angle) * 4;
+                    child.velocity.y = Math.sin(angle) * 4 + 2;
+                    enemies.push(child);
+                }
+            }
         }
     }
 
@@ -344,38 +391,45 @@ class Enemy {
         ctx.beginPath();
         
         if (this.type === 'tank') {
-            // タンクは六角形
             for (let i = 0; i < 6; i++) {
                 ctx.lineTo(this.radius * Math.cos(i * Math.PI / 3), this.radius * Math.sin(i * Math.PI / 3));
             }
             ctx.closePath();
         } else if (this.type === 'speed') {
-            // スピードは三角形
             ctx.moveTo(0, this.radius);
             ctx.lineTo(this.radius * 0.866, -this.radius * 0.5);
             ctx.lineTo(-this.radius * 0.866, -this.radius * 0.5);
             ctx.closePath();
+        } else if (this.type === 'shooter') {
+            // シューターは菱形に近い八角形
+            for (let i = 0; i < 8; i++) {
+                const r = i % 2 === 0 ? this.radius : this.radius * 0.7;
+                ctx.lineTo(r * Math.cos(i * Math.PI / 4), r * Math.sin(i * Math.PI / 4));
+            }
+            ctx.closePath();
+        } else if (this.type === 'splitter' || this.type === 'mini-splitter') {
+            // スプリッターは星型っぽく
+            for (let i = 0; i < 10; i++) {
+                const r = i % 2 === 0 ? this.radius : this.radius * 0.4;
+                ctx.lineTo(r * Math.cos(i * Math.PI / 5), r * Math.sin(i * Math.PI / 5));
+            }
+            ctx.closePath();
         } else {
-            // ノーマルは四角形
             ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
         }
 
-        // ネオン効果
         ctx.shadowBlur = 15;
-        // ダメージフラッシュ時は白く光る
         ctx.shadowColor = this.damageFlash > 0 ? '#fff' : this.color;
         
         ctx.strokeStyle = this.damageFlash > 0 ? '#fff' : this.color;
         ctx.lineWidth = 3;
         ctx.stroke();
         
-        // 内側の塗りつぶし（半透明）
         ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
         ctx.fill();
         
         if (this.damageFlash > 0) this.damageFlash--;
 
-        // 十字線や装飾を追加
         if (this.type === 'normal') {
             ctx.beginPath();
             ctx.moveTo(-this.radius, 0); ctx.lineTo(this.radius, 0);
@@ -391,26 +445,68 @@ class Enemy {
         this.x += this.velocity.x * speedMod;
         this.y += this.velocity.y * speedMod;
         this.angle += this.spinSpeed * speedMod;
+
+        // シューターの攻撃射撃ロジック
+        if (this.type === 'shooter' && !isGameOver) {
+            const now = Date.now();
+            if (now - this.lastShootTime > this.shootInterval) {
+                const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                enemyProjectiles.push(new EnemyProjectile(this.x, this.y, {
+                    x: Math.cos(angle) * 4, // 弾速を少しアップ (3 -> 4)
+                    y: Math.sin(angle) * 4
+                }));
+                this.lastShootTime = now;
+            }
+        }
         
         // 炎上ダメージ
         if (this.onFire > 0) {
             this.onFire--;
             if (this.onFire % 30 === 0) {
-                this.takeDamage(0.5); // スリップダメージ
-                // 炎のパーティクル
+                this.takeDamage(0.5); 
                 for(let i=0; i<3; i++) particles.push(new Particle(this.x, this.y, '#f50'));
             }
         }
-        // 氷結タイマー
         if (this.isFrozen > 0) this.isFrozen--;
 
-        // 画面の端でバウンド（X軸）
         if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
             this.velocity.x *= -1;
         }
 
-        // 画面下部へ消えたら削除
         if (this.y > canvas.height + this.radius) {
+            this.markedForDeletion = true;
+        }
+    }
+}
+
+// 敵の弾
+class EnemyProjectile {
+    constructor(x, y, velocity) {
+        this.x = x;
+        this.y = y;
+        this.radius = 5 * gameScale;
+        this.velocity = velocity;
+        this.color = '#f00'; // 敵の弾は赤
+        this.markedForDeletion = false;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        
+        if (this.y < -this.radius || this.x < -this.radius || 
+            this.x > canvas.width + this.radius || this.y > canvas.height + this.radius) {
             this.markedForDeletion = true;
         }
     }
@@ -527,6 +623,7 @@ class ExpGem {
 let player;
 let projectiles = [];
 let enemies = [];
+let enemyProjectiles = []; // 敵の弾用配列
 let particles = [];
 let expGems = [];
 let targetPos = { x: window.innerWidth / 2, y: window.innerHeight - 100 };
@@ -621,6 +718,7 @@ function init() {
     player = new Player();
     projectiles = [];
     enemies = [];
+    enemyProjectiles = [];
     particles = [];
     expGems = [];
     score = 0;
@@ -830,6 +928,23 @@ function animate(currentTime) {
             proj.draw();
         });
 
+        // 敵の弾
+        enemyProjectiles.forEach((eproj) => {
+            eproj.update();
+            eproj.draw();
+
+            // 敵弾 vs 自機
+            if (!isGameOver && checkCollision(player, eproj)) {
+                if (player.shieldActive) {
+                    player.shieldActive = false;
+                    eproj.markedForDeletion = true;
+                    createExplosion(player.x, player.y, '#0f0');
+                } else {
+                    triggerGameOver();
+                }
+            }
+        });
+
         // 敵と衝突判定
         enemies.forEach((enemy) => {
             enemy.update();
@@ -937,6 +1052,7 @@ function animate(currentTime) {
 
         // 不要になったオブジェクトを配列から削除
         projectiles = projectiles.filter(proj => !proj.markedForDeletion);
+        enemyProjectiles = enemyProjectiles.filter(eproj => !eproj.markedForDeletion);
         enemies = enemies.filter(enemy => !enemy.markedForDeletion);
         particles = particles.filter(particle => !particle.markedForDeletion);
         expGems = expGems.filter(g => !g.markedForDeletion);
