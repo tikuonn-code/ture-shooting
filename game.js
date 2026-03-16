@@ -1300,8 +1300,25 @@ gachaMultiBtn.addEventListener('click', () => executeGacha(10));
 updateLuminousUI();
 
 // 背景の初期描画用（プレイ前）
-function drawBackground() {
-    ctx.fillStyle = '#050510';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
 drawBackground();
+
+// ブースト発生時の簡易演出
+function createBoostEffect() {
+    const boostMsg = document.createElement('div');
+    boostMsg.style.position = 'absolute';
+    boostMsg.style.top = '50%';
+    boostMsg.style.left = '50%';
+    boostMsg.style.transform = 'translate(-50%, -50%)';
+    boostMsg.style.fontSize = '3rem';
+    boostMsg.style.fontWeight = '900';
+    boostMsg.style.color = '#ff0';
+    boostMsg.style.textShadow = '0 0 20px #ff0, 0 0 40px #ff0';
+    boostMsg.style.zIndex = '100';
+    boostMsg.style.pointerEvents = 'none';
+    boostMsg.innerText = 'LUMINOUS BOOST!!';
+    boostMsg.style.animation = 'boostPopMsg 1.5s ease-out forwards';
+    document.getElementById('ui-layer').appendChild(boostMsg);
+
+    // 削除
+    setTimeout(() => boostMsg.remove(), 1500);
+}
