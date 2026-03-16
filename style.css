@@ -240,8 +240,8 @@ button:active {
 .gacha-btn {
     bottom: 30px;
     right: 20px;
-    width: 130px;
-    height: 130px;
+    width: 160px;
+    height: 160px;
     border: 3px solid #ff0;
     box-shadow: 0 0 15px #ff0 inset, 0 0 15px rgba(255, 255, 0, 0.4);
 }
@@ -256,12 +256,13 @@ button:active {
 .collection-btn {
     bottom: 30px;
     left: 20px;
-    width: 130px;
+    width: 150px;
     height: 65px;
     border: 3px solid #0f0;
     box-shadow: 0 0 10px #0f0 inset, 0 0 10px rgba(0, 255, 0, 0.4);
     flex-direction: row;
-    gap: 10px;
+    gap: 8px;
+    padding: 0 15px;
 }
 
 .collection-btn:hover {
@@ -299,6 +300,8 @@ button:active {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transform: scale(1.2);
+    margin-bottom: 15px;
 }
 
 .gacha-head {
@@ -458,15 +461,16 @@ button:active {
     .help-item p { font-size: 0.95rem; }
     
     .gacha-btn {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
         bottom: 20px;
     }
     .collection-btn {
-        width: 100px;
+        width: 120px;
         height: 50px;
         bottom: 20px;
+        padding: 0 10px;
     }
-    .btn-label { font-size: 0.8rem; }
-    .gacha-ill { transform: scale(0.8); }
+    .btn-label { font-size: 0.75rem; }
+    .gacha-ill { transform: scale(0.9); margin-bottom: 8px; }
 }
