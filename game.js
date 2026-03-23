@@ -963,9 +963,11 @@ let lastTouchTime = 0;
 
 // スマホ用タッチイベント（スクロールも防ぐ）
 window.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // デフォルトのスクロール動作をキャンセル
-    if (e.touches.length > 0) {
-        updateTargetObject(e.touches[0].clientX, e.touches[0].clientY);
+    if (isPlaying) {
+        e.preventDefault(); // ゲームプレイ中のみデフォルトのスクロール動作をキャンセル
+        if (e.touches.length > 0) {
+            updateTargetObject(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }
 }, { passive: false }); // passive: false にして preventDefault を有効化
 
