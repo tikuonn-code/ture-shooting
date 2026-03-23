@@ -420,6 +420,22 @@ class Enemy {
         this.x = x || Math.random() * (canvas.width - this.radius * 2) + this.radius;
         this.y = y || -this.radius;
 
+        // レベル5以上でのステータス補正（底上げ）
+        if (currentLevel >= 5) {
+            const levelFactor = currentLevel - 4;
+            // HPをレベルに応じて増加 (レベル5で1.4倍、以降+40%ずつ)
+            const hpScale = 1 + (levelFactor * 0.4);
+            this.hp = Math.ceil(this.hp * hpScale);
+            
+            // 速度を段階的に上昇
+            this.speedMultiplier *= (1 + levelFactor * 0.08);
+            
+            // シューターの攻撃間隔を短縮
+            if (this.type === 'shooter') {
+                this.shootInterval = Math.max(600, this.shootInterval - levelFactor * 150);
+            }
+        }
+
         const baseSpeed = (40 * gameScale - this.radius) * 0.1;
         this.velocity = { x: (Math.random() - 0.5) * 2, y: baseSpeed * this.speedMultiplier + 1 };
 
@@ -524,11 +540,11 @@ class Enemy {
             ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
         }
 
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = currentLevel >= 5 ? 25 : 15; // レベル5以上はより強く発光
         ctx.shadowColor = this.damageFlash > 0 ? '#fff' : this.color;
 
         ctx.strokeStyle = this.damageFlash > 0 ? '#fff' : this.color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = currentLevel >= 5 ? 5 : 3; // レベル5以上は輪郭を太く
         ctx.stroke();
 
         ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
@@ -630,7 +646,9 @@ class Boss {
         this.y = -this.height; // 上から登場
         this.targetY = 150 * gameScale; // この高さで止まる
         this.color = '#f00'; // ボスは不気味な赤
-        this.hpMax = 50 + (currentLevel * 20);
+        // ボスHPをレベル5から大幅に強化
+        const levelBonus = currentLevel >= 5 ? (currentLevel - 4) * 100 : 0;
+        this.hpMax = 100 + (currentLevel * 50) + levelBonus;
         this.hp = this.hpMax;
         
         this.velocity = { x: 2, y: 1 };
@@ -947,12 +965,12 @@ function updateTargetObject(x, y) {
 }
 
 // PC用マウスイベント
-window.addEventListener('mousemove', (e) => {
+canvas.addEventListener('mousemove', (e) => {
     updateTargetObject(e.clientX, e.clientY);
 });
 
 // 左クリックでレーザー発射
-window.addEventListener('mousedown', (e) => {
+canvas.addEventListener('mousedown', (e) => {
     if (!isPlaying) return;
     if (e.button === 0) { // 左クリック
         player.fireLaser();
@@ -1102,6 +1120,11 @@ function levelUp() {
     levelValue.innerText = currentLevel;
     updateExpBar();
 
+    // レベル5到達時に難易度上昇の警告を表示
+    if (currentLevel === 5) {
+        createBoostEffect("WARNING: DIFFICULTY UP !!");
+    }
+
     // ゲームを一時停止
     isPlaying = false;
 
@@ -1234,8 +1257,12 @@ function animate(currentTime) {
         if (!isBossActive && enemySpawnTimer > enemySpawnInterval) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            // スコアに応じて出現間隔を短くする（難易度アップ）最小400ms
-            enemySpawnInterval = Math.max(400, 1000 - (score * 5));
+            // レベルに応じて出現間隔を短くする（レベル5以降はさらに加速）
+            const baseInterval = 1000;
+            const levelReduction = (currentLevel - 1) * 80;
+            const bossReduction = isBossActive ? 200 : 0;
+            
+            enemySpawnInterval = Math.max(250, baseInterval - levelReduction - bossReduction);
         }
 
         // ボスの更新

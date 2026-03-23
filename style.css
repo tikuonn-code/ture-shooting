@@ -15,9 +15,7 @@ html {
     color: #fff;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     overflow: hidden;
-    /* スクロール防止 */
-    touch-action: none;
-    /* スマホのデフォルトタッチアクション（スワイプバック等）を無効化 */
+    /* スクロール防止（バウンス等はJSでcanvasに限定して制御） */
 }
 
 #game-container {
@@ -33,6 +31,7 @@ html {
 canvas {
     display: block;
     /* キャンバス自体はJSで全画面にリサイズします */
+    touch-action: none; /* ゲーム画面そのものはスクロール禁止 */
 }
 
 #ui-layer {
@@ -533,7 +532,7 @@ button:active {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     border: 1px solid rgba(0, 255, 0, 0.2);
-    touch-action: pan-y;
+    touch-action: pan-y !important;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -765,7 +764,7 @@ button:active {
     gap: 10px;
     padding: 15px;
     overflow-y: auto;
-    touch-action: pan-y;
+    touch-action: pan-y !important;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -826,7 +825,7 @@ button:active {
     max-height: 60vh;
     overflow-y: auto;
     padding: 10px;
-    touch-action: pan-y;
+    touch-action: pan-y !important;
     -webkit-overflow-scrolling: touch;
 }
 
