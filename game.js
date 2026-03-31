@@ -1150,6 +1150,9 @@ function checkCollision(obj1, obj2) {
 
 // 爆発エフェクト生成
 function createExplosion(x, y, color, customCount = null) {
+    // パワー不足によるフリーズ防止（パーティクルが多すぎる場合は生成を制限）
+    if (particles.length > 500) return;
+
     const pCount = customCount !== null ? customCount : (isBossActive ? 25 : 15);
     for (let i = 0; i < pCount; i++) {
         particles.push(new Particle(x, y, color));
@@ -1322,8 +1325,6 @@ function triggerGameOver() {
 }
 
 function animate(currentTime) {
-    if (!isPlaying) return;
-
     // 前フレームからの経過時間（デルタタイム）を計算
     let deltaTime = currentTime - lastFrameTime;
     lastFrameTime = currentTime;
@@ -1339,6 +1340,17 @@ function animate(currentTime) {
     // モッタリ感を減らすため、透明度を 0.3 -> 0.5 に上げて残像を短くする
     ctx.fillStyle = 'rgba(5, 5, 16, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // ポーズ中（レベルアップ画面など）でもパーティクルと背景の描画は維持する
+    if (!isPlaying && !isGameOver) {
+        particles.forEach((particle) => {
+            particle.update(1.0);
+            if (!particle.markedForDeletion) particle.draw();
+        });
+        particles = particles.filter(particle => !particle.markedForDeletion);
+        animationId = requestAnimationFrame(animate);
+        return;
+    }
 
     if (!isGameOver) {
         // --- 敵の生成 ---
@@ -1490,11 +1502,23 @@ function animate(currentTime) {
                             });
                             
                             if (nextEnemy) {
+                                // 跳ね返りの瞬間を視覚化（フラッシュやライン）
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.moveTo(proj.x, proj.y);
+                                ctx.lineTo(nextEnemy.x, nextEnemy.y);
+                                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
+                                ctx.restore();
+
                                 const angle = Math.atan2(nextEnemy.y - proj.y, nextEnemy.x - proj.x);
                                 const speed = Math.hypot(proj.velocity.x, proj.velocity.y);
                                 proj.velocity.x = Math.cos(angle) * speed;
                                 proj.velocity.y = Math.sin(angle) * speed;
                                 proj.bounces++;
+                                // ヒットエフェクト
+                                createExplosion(proj.x, proj.y, '#fff', 2);
                             } else {
                                 if (!proj.pierce) proj.markedForDeletion = true;
                             }
