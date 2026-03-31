@@ -224,18 +224,17 @@ class Player {
         ctx.restore();
     }
 
-    update(targetX, targetY) {
+    update(targetX, targetY, dt) {
         // マウス/タッチされた位置を追従（現在位置から目標位置へ近づく）
-        // スムーズな移動(Lerp処理)
-        this.x += (targetX - this.x) * this.speedFactor;
-        this.y += (targetY - this.y) * this.speedFactor;
+        // スムーズな移動(Lerp処理) にDelta Timeを考慮
+        this.x += (targetX - this.x) * this.speedFactor * dt;
+        this.y += (targetY - this.y) * this.speedFactor * dt;
 
         // 画面外に出ないように制限
         if (this.x < this.width / 2) this.x = this.width / 2;
         if (this.x > canvas.width - this.width / 2) this.x = canvas.width - this.width / 2;
         if (this.y < this.height / 2) this.y = this.height / 2;
         // 画面下部はキャンバスの高さギリギリまで移動できるようにする。
-        // （指やマウスでターゲットを設定した際、指の上に少しずらして描画する事で操作しやすくなる）
         if (this.y > canvas.height - this.height / 2) this.y = canvas.height - this.height / 2;
 
         // レーザーの状態更新
@@ -316,7 +315,7 @@ class Projectile {
         ctx.restore();
     }
 
-    update() {
+    update(dt) {
         // ホーミング機能
         if (this.homing && enemies.length > 0) {
             let closest = null;
@@ -331,9 +330,9 @@ class Projectile {
             });
             if (closest) {
                 const angle = Math.atan2(closest.y - this.y, closest.x - this.x);
-                // 追尾性能をさらに抑制（0.15 -> 0.07）して滑らかなカーブにする
-                this.velocity.x += Math.cos(angle) * 0.07;
-                this.velocity.y += Math.sin(angle) * 0.07;
+                // 追尾性能もDelta Timeで補正
+                this.velocity.x += Math.cos(angle) * 0.07 * dt;
+                this.velocity.y += Math.sin(angle) * 0.07 * dt;
                 // 最大速度をクリップ
                 const currentSpeed = Math.hypot(this.velocity.x, this.velocity.y);
                 const maxSpeed = 10;
@@ -344,8 +343,8 @@ class Projectile {
             }
         }
 
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
+        this.x += this.velocity.x * dt;
+        this.y += this.velocity.y * dt;
 
         // 画面外に出たら削除フラグを立てる（X軸も考慮）
         if (this.y < -this.radius || this.x < -this.radius ||
@@ -537,7 +536,10 @@ class Enemy {
             }
             ctx.closePath();
         } else {
-            ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+            // 通常敵（ピンク）の場合、レベル5以上では元の体を描画せず目玉のみにする
+            if (!(currentLevel >= 5 && this.type === 'normal')) {
+                ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+            }
         }
 
         ctx.shadowBlur = currentLevel >= 5 ? 25 : 15; // レベル5以上はより強く発光
@@ -550,23 +552,95 @@ class Enemy {
         ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
         ctx.fill();
 
+        // 強化レベル(Lv5+)に応じて「ナッツ型の瞳を持つ一つ目」を描画
+        if (currentLevel >= 5 && this.type === 'normal') {
+            const w = this.radius * 1.4;
+            const h = this.radius * 0.9;
+            
+            // プレイヤーの方向を計算して瞳をわずかにずらす（凝視エフェクト）
+            const angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+            const pupilOffset = 3 * gameScale;
+            const px = Math.cos(angleToPlayer) * pupilOffset;
+            const py = Math.sin(angleToPlayer) * pupilOffset;
+
+            // 目玉の本体（ナッツ型/横長の楕円）
+            ctx.beginPath();
+            ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#f00';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#f00';
+            ctx.fill();
+            
+            // 瞳孔（ナッツ型・縦長の楕円）
+            ctx.beginPath();
+            ctx.ellipse(px, py, w * 0.4, h * 0.8, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#111';
+            ctx.shadowBlur = 0;
+            ctx.fill();
+
+            // 瞳孔の中にさらに細いスリット（爬虫類のような瞳）
+            ctx.beginPath();
+            ctx.ellipse(px, py, w * 0.1, h * 0.6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+
+            // ハイライト
+            ctx.beginPath();
+            ctx.arc(px - w * 0.4, py - h * 0.4, w * 0.15, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fill();
+            
+            // 血管・筋肉のような筋
+            ctx.strokeStyle = '#a00';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < 4; i++) {
+                const side = i < 2 ? 1 : -1;
+                ctx.beginPath();
+                ctx.moveTo(side * w * 0.6, 0);
+                ctx.quadraticCurveTo(side * w, side * h, side * w * 0.9, 0);
+                ctx.stroke();
+            }
+        } else if (currentLevel >= 5 && this.type !== 'mini-splitter') {
+            // 他の敵種の場合は従来通り上に目を重ねる
+            const eyeSize = this.radius * 0.8;
+            const angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+            const pupilOffset = 2 * gameScale;
+            const px = Math.cos(angleToPlayer) * pupilOffset;
+            const py = Math.sin(angleToPlayer) * pupilOffset;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, eyeSize, 0, Math.PI * 2);
+            ctx.fillStyle = '#f00';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#f00';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(px, py, eyeSize * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = '#111';
+            ctx.fill();
+        }
+
         if (this.damageFlash > 0) this.damageFlash--;
 
         if (this.type === 'normal') {
-            ctx.beginPath();
-            ctx.moveTo(-this.radius, 0); ctx.lineTo(this.radius, 0);
-            ctx.moveTo(0, -this.radius); ctx.lineTo(0, this.radius);
-            ctx.stroke();
+            // レベル5以上でピンクの模様（十字のライン）を消す
+            if (!(currentLevel >= 5)) {
+                ctx.beginPath();
+                ctx.moveTo(-this.radius, 0); ctx.lineTo(this.radius, 0);
+                ctx.moveTo(0, -this.radius); ctx.lineTo(0, this.radius);
+                ctx.stroke();
+            }
         }
 
         ctx.restore();
     }
 
-    update() {
+    update(dt) {
         let speedMod = this.isFrozen > 0 ? 0.3 : 1.0;
-        this.x += this.velocity.x * speedMod;
-        this.y += this.velocity.y * speedMod;
-        this.angle += this.spinSpeed * speedMod;
+        this.x += this.velocity.x * speedMod * dt;
+        this.y += this.velocity.y * speedMod * dt;
+        this.angle += this.spinSpeed * speedMod * dt;
 
         // ボス出現中は通常の敵は積極的には攻撃してこないようにする（またはボスの邪魔をしない）
         if (isBossActive) speedMod *= 0.5;
@@ -586,13 +660,13 @@ class Enemy {
 
         // 炎上ダメージ
         if (this.onFire > 0) {
-            this.onFire--;
-            if (this.onFire % 30 === 0) {
+            this.onFire -= dt;
+            if (Math.floor(this.onFire) % 30 === 0) {
                 this.takeDamage(0.5);
                 for (let i = 0; i < 3; i++) particles.push(new Particle(this.x, this.y, '#f50'));
             }
         }
-        if (this.isFrozen > 0) this.isFrozen--;
+        if (this.isFrozen > 0) this.isFrozen -= dt;
 
         if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
             this.velocity.x *= -1;
@@ -626,9 +700,9 @@ class EnemyProjectile {
         ctx.restore();
     }
 
-    update() {
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
+    update(dt) {
+        this.x += this.velocity.x * dt;
+        this.y += this.velocity.y * dt;
 
         if (this.y < -this.radius || this.x < -this.radius ||
             this.x > canvas.width + this.radius || this.y > canvas.height + this.radius) {
@@ -646,9 +720,9 @@ class Boss {
         this.y = -this.height; // 上から登場
         this.targetY = 150 * gameScale; // この高さで止まる
         this.color = '#f00'; // ボスは不気味な赤
-        // ボスHPをレベル5から大幅に強化
-        const levelBonus = currentLevel >= 5 ? (currentLevel - 4) * 100 : 0;
-        this.hpMax = 100 + (currentLevel * 50) + levelBonus;
+        // ボスHPをレベル5から段階的に強化（半分程度に調整）
+        const levelBonus = currentLevel >= 5 ? (currentLevel - 4) * 50 : 0;
+        this.hpMax = 60 + (currentLevel * 30) + levelBonus;
         this.hp = this.hpMax;
         
         this.velocity = { x: 2, y: 1 };
@@ -664,7 +738,7 @@ class Boss {
         ctx.save();
         ctx.translate(this.x, this.y);
         
-        // メインボディ
+        // メインボディ (初期デザインの復元)
         ctx.beginPath();
         ctx.moveTo(0, -this.height/2);
         ctx.lineTo(this.width/2, 0);
@@ -700,9 +774,9 @@ class Boss {
         ctx.restore();
     }
 
-    update() {
+    update(dt) {
         if (this.isEntering) {
-            this.y += (this.targetY - this.y) * 0.05;
+            this.y += (this.targetY - this.y) * 0.05 * dt;
             if (Math.abs(this.y - this.targetY) < 1) {
                 this.isEntering = false;
                 bossHpContainer.style.display = 'block';
@@ -711,7 +785,7 @@ class Boss {
         }
 
         // 左右に移動
-        this.x += this.velocity.x;
+        this.x += this.velocity.x * dt;
         if (this.x < this.width/2 + 20 || this.x > canvas.width - this.width/2 - 20) {
             this.velocity.x *= -1;
         }
@@ -833,13 +907,15 @@ class Particle {
         ctx.restore();
     }
 
-    update() {
-        this.velocity.x *= this.friction;
-        this.velocity.y *= this.friction;
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
+    update(dt) {
+        // 徐々に減速する（Delta Time考慮）
+        const currentFriction = Math.pow(this.friction, dt);
+        this.velocity.x *= currentFriction;
+        this.velocity.y *= currentFriction;
+        this.x += this.velocity.x * dt;
+        this.y += this.velocity.y * dt;
         // 徐々に透明にする
-        this.alpha -= 0.02;
+        this.alpha -= 0.02 * dt;
         if (this.alpha <= 0) {
             this.markedForDeletion = true;
         }
@@ -876,10 +952,10 @@ class ExpGem {
         ctx.restore();
     }
 
-    update() {
+    update(dt) {
         // ゆっくり下に落ちる
         if (!this.magnetized) {
-            this.y += 0.5;
+            this.y += 0.5 * dt;
 
             // プレイヤーに一定距離（マグネット範囲）近づいたら引き寄せ開始
             const magnetRange = player.magnetRange; // パワーアップで広がる
@@ -893,9 +969,9 @@ class ExpGem {
             const dy = player.y - this.y;
             const dist = Math.hypot(dx, dy);
 
-            this.speed += 0.5;
-            this.x += (dx / dist) * this.speed;
-            this.y += (dy / dist) * this.speed;
+            this.speed += 0.5 * dt;
+            this.x += (dx / dist) * this.speed * dt;
+            this.y += (dy / dist) * this.speed * dt;
 
             // 取得判定
             if (dist < player.width) {
@@ -1233,9 +1309,15 @@ function triggerGameOver() {
 function animate(currentTime) {
     if (!isPlaying) return;
 
-    // 前フレームからの経過時間（デルタタイム）を計算して敵出現に使用
-    const deltaTime = currentTime - lastFrameTime;
+    // 前フレームからの経過時間（デルタタイム）を計算
+    let deltaTime = currentTime - lastFrameTime;
     lastFrameTime = currentTime;
+
+    // 長すぎるデルタタイム（タブの切り替えなど）を制限し、1フレごとの移動を抑える
+    if (deltaTime > 100) deltaTime = 16.666;
+
+    // 60FPS(16.666ms)を1.0とした係数
+    const dt = deltaTime / 16.666;
 
     // 前のフレームを少し残して軌跡を描画する (Trail Effect)
     ctx.fillStyle = 'rgba(5, 5, 16, 0.3)'; // 完全にクリアせず少し残す
@@ -1257,7 +1339,7 @@ function animate(currentTime) {
         if (!isBossActive && enemySpawnTimer > enemySpawnInterval) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            // レベルに応じて出現間隔を短くする（レベル5以降はさらに加速）
+            // レベルに応じて出現間隔を短くする
             const baseInterval = 1000;
             const levelReduction = (currentLevel - 1) * 80;
             const bossReduction = isBossActive ? 200 : 0;
@@ -1267,14 +1349,14 @@ function animate(currentTime) {
 
         // ボスの更新
         if (isBossActive && boss) {
-            boss.update();
+            boss.update(dt);
             boss.draw();
         }
 
         // --- 更新と描画 ---
 
         // 自機
-        player.update(targetPos.x, targetPos.y);
+        player.update(targetPos.x, targetPos.y, dt);
         player.draw();
 
         // 自動射撃
@@ -1282,13 +1364,13 @@ function animate(currentTime) {
 
         // 弾
         projectiles.forEach((proj) => {
-            proj.update();
+            proj.update(dt);
             proj.draw();
         });
 
         // 敵の弾
         enemyProjectiles.forEach((eproj) => {
-            eproj.update();
+            eproj.update(dt);
             eproj.draw();
 
             // 敵弾 vs 自機
@@ -1305,7 +1387,7 @@ function animate(currentTime) {
 
         // 敵と衝突判定
         enemies.forEach((enemy) => {
-            enemy.update();
+            enemy.update(dt);
             enemy.draw();
 
             // 自機（シールド含む）と敵の衝突
@@ -1320,16 +1402,6 @@ function animate(currentTime) {
                 }
             }
 
-            // 自機とボスの衝突
-            if (!isGameOver && isBossActive && boss && checkCollision(player, boss)) {
-                if (player.shieldActive) {
-                    player.shieldActive = false;
-                    boss.takeDamage(5);
-                    createExplosion(player.x, player.y, '#0f0');
-                } else {
-                    triggerGameOver();
-                }
-            }
 
             // レーザーと敵の衝突
             if (player.isLaserActive && !enemy.markedForDeletion) {
@@ -1343,13 +1415,6 @@ function animate(currentTime) {
                 }
             }
 
-            if (player.isLaserActive && isBossActive && boss) {
-                // レーザー vs ボス (簡易的な短形当たり判定)
-                if (boss.x + boss.width/2 > player.x - player.laserWidth / 2 &&
-                    boss.x - boss.width/2 < player.x + player.laserWidth / 2) {
-                    boss.takeDamage(0.5); // ボスには持続ダメージとして少しずつ
-                }
-            }
 
             // 弾と敵の衝突
             projectiles.forEach((proj) => {
@@ -1400,16 +1465,6 @@ function animate(currentTime) {
                 }
             });
 
-            // 弾 vs ボス
-            projectiles.forEach(proj => {
-                if (!proj.markedForDeletion && isBossActive && boss) {
-                    if (checkCollision(proj, boss)) {
-                        boss.takeDamage(proj.damage);
-                        if (!proj.pierce) proj.markedForDeletion = true;
-                        createExplosion(proj.x, proj.y, boss.color);
-                    }
-                }
-            });
 
             // 敵が倒された時の処理（takeDamage内で判定済）
             if (enemy.markedForDeletion && enemy.hp <= 0 && !isGameOver) {
@@ -1446,15 +1501,50 @@ function animate(currentTime) {
             }
         });
 
+        // --- ボスの個別衝突判定 (ザコ敵ループの外で1回だけ実行) ---
+        if (isBossActive && boss) {
+            // 自機とボスの衝突
+            if (!isGameOver && checkCollision(player, boss)) {
+                if (player.shieldActive) {
+                    player.shieldActive = false;
+                    boss.takeDamage(5);
+                    createExplosion(player.x, player.y, '#0f0');
+                } else {
+                    triggerGameOver();
+                }
+            }
+
+            // レーザー vs ボス
+            if (player.isLaserActive) {
+                if (boss.x + boss.width/2 > player.x - player.laserWidth / 2 &&
+                    boss.x - boss.width/2 < player.x + player.laserWidth / 2) {
+                    boss.takeDamage(1.5); // ザコ敵ループ外になったのでダメージ値を再調整
+                }
+            }
+
+            // 弾 vs ボス
+            projectiles.forEach(proj => {
+                // hitEnemies.has(boss) をチェックして貫通弾の多段ヒットを防止
+                if (!proj.markedForDeletion && !proj.hitEnemies.has(boss)) {
+                    if (checkCollision(proj, boss)) {
+                        proj.hitEnemies.add(boss);
+                        boss.takeDamage(proj.damage);
+                        if (!proj.pierce) proj.markedForDeletion = true;
+                        createExplosion(proj.x, proj.y, boss.color);
+                    }
+                }
+            });
+        }
+
         // 経験値ジェム
         expGems.forEach(gem => {
-            gem.update();
+            gem.update(dt);
             gem.draw();
         });
 
         // パーティクル
         particles.forEach((particle) => {
-            particle.update();
+            particle.update(dt);
             particle.draw();
         });
 
