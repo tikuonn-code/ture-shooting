@@ -1045,8 +1045,14 @@ function updateTargetObject(x, y) {
     const canvasRect = canvas.getBoundingClientRect();
     targetPos.x = x - canvasRect.left;
 
-    // 指で自機が隠れないように、少し上（-60px程度）にオフセットとしてずらす
-    targetPos.y = y - canvasRect.top - 60;
+    // スマホ（タッチ操作）の場合は指で自機が隠れないように Y-60 するが、
+    // PC（マウス操作）の場合はカーソル位置に完全一致させる
+    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isMobile) {
+        targetPos.y = y - canvasRect.top - 60;
+    } else {
+        targetPos.y = y - canvasRect.top;
+    }
 }
 
 // PC用マウスイベント
@@ -1330,7 +1336,8 @@ function animate(currentTime) {
     const dt = (deltaTime / 16.666) * 1.5;
 
     // 前のフレームを少し残して軌跡を描画する (Trail Effect)
-    ctx.fillStyle = 'rgba(5, 5, 16, 0.3)'; // 完全にクリアせず少し残す
+    // モッタリ感を減らすため、透明度を 0.3 -> 0.5 に上げて残像を短くする
+    ctx.fillStyle = 'rgba(5, 5, 16, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (!isGameOver) {
