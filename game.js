@@ -904,8 +904,9 @@ class Particle {
     }
 
     draw() {
+        if (this.alpha <= 0 || this.markedForDeletion) return;
         ctx.save();
-        ctx.globalAlpha = this.alpha;
+        ctx.globalAlpha = Math.max(0, this.alpha);
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
@@ -1325,7 +1326,8 @@ function animate(currentTime) {
     if (deltaTime > 100) deltaTime = 16.666;
 
     // 60FPS(16.666ms)を1.0とした係数
-    const dt = deltaTime / 16.666;
+    // 全体的な速度を上げるため、さらに1.25倍にする
+    const dt = (deltaTime / 16.666) * 1.25;
 
     // 前のフレームを少し残して軌跡を描画する (Trail Effect)
     ctx.fillStyle = 'rgba(5, 5, 16, 0.3)'; // 完全にクリアせず少し残す
@@ -1554,9 +1556,10 @@ function animate(currentTime) {
         });
 
         // パーティクル
+        // updateで削除フラグが立ったものは描画しないように修正
         particles.forEach((particle) => {
             particle.update(dt);
-            particle.draw();
+            if (!particle.markedForDeletion) particle.draw();
         });
 
         // 不要になったオブジェクトを配列から削除
@@ -1570,8 +1573,8 @@ function animate(currentTime) {
     } else {
         // ゲームオーバー後もパーティクルだけ描画を続ける
         particles.forEach((particle) => {
-            particle.update();
-            particle.draw();
+            particle.update(1.0); // 簡易的に1フレ扱い
+            if (!particle.markedForDeletion) particle.draw();
         });
         particles = particles.filter(particle => !particle.markedForDeletion);
         if (particles.length > 0) {
