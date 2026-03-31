@@ -427,15 +427,15 @@ class Enemy {
         this.x = x || Math.random() * (canvas.width - this.radius * 2) + this.radius;
         this.y = y || -this.radius;
 
-        // レベル5以上でのステータス補正（底上げ）
+        // レベル5以上でのステータス補正（大幅強化）
         if (currentLevel >= 5) {
             const levelFactor = currentLevel - 4;
-            // HPをレベルに応じて増加 (レベル5で1.4倍、以降+40%ずつ)
-            const hpScale = 1 + (levelFactor * 0.4);
+            // HPを急激に増加 (以前の0.4から1.5へ引き上げ)
+            const hpScale = 1 + (levelFactor * 1.5);
             this.hp = Math.ceil(this.hp * hpScale);
             
             // 速度を段階的に上昇
-            this.speedMultiplier *= (1 + levelFactor * 0.08);
+            this.speedMultiplier *= (1 + levelFactor * 0.1);
             
             // シューターの攻撃間隔を短縮
             if (this.type === 'shooter') {
@@ -519,127 +519,114 @@ class Enemy {
 
         ctx.beginPath();
 
-        if (this.type === 'tank') {
-            for (let i = 0; i < 6; i++) {
-                ctx.lineTo(this.radius * Math.cos(i * Math.PI / 3), this.radius * Math.sin(i * Math.PI / 3));
+        if (currentLevel >= 5 && this.type !== 'mini-splitter') {
+            // --- レベル5以上：完全に新しい「棘スキン」 ---
+            ctx.save();
+            ctx.strokeStyle = this.damageFlash > 0 ? '#fff' : this.color;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = this.color;
+
+            // 敵タイプによって棘の数や長さを変える
+            let spikeCount = 8;
+            let innerRadius = this.radius * 0.4;
+            let outerRadius = this.radius * 1.3;
+
+            if (this.type === 'tank') {
+                spikeCount = 14;
+                innerRadius = this.radius * 0.6;
+                outerRadius = this.radius * 1.5;
+            } else if (this.type === 'speed') {
+                spikeCount = 5;
+                innerRadius = this.radius * 0.3;
+                outerRadius = this.radius * 1.8;
+            } else if (this.type === 'shooter') {
+                spikeCount = 10;
+                innerRadius = this.radius * 0.5;
+                outerRadius = this.radius * 1.3;
+            }
+
+            // 多角形の棘形状を一から描画（元の形状 rect/hex 等は描かない）
+            ctx.beginPath();
+            for (let i = 0; i < spikeCount * 2; i++) {
+                const angle = (i / (spikeCount * 2)) * Math.PI * 2;
+                const r = i % 2 === 0 ? outerRadius : innerRadius;
+                const px = Math.cos(angle) * r;
+                const py = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
             }
             ctx.closePath();
-        } else if (this.type === 'speed') {
-            ctx.moveTo(0, this.radius);
-            ctx.lineTo(this.radius * 0.866, -this.radius * 0.5);
-            ctx.lineTo(-this.radius * 0.866, -this.radius * 0.5);
-            ctx.closePath();
-        } else if (this.type === 'shooter') {
-            // シューターは菱形に近い八角形
-            for (let i = 0; i < 8; i++) {
-                const r = i % 2 === 0 ? this.radius : this.radius * 0.7;
-                ctx.lineTo(r * Math.cos(i * Math.PI / 4), r * Math.sin(i * Math.PI / 4));
-            }
-            ctx.closePath();
-        } else if (this.type === 'splitter' || this.type === 'mini-splitter') {
-            // スプリッターは星型っぽく
-            for (let i = 0; i < 10; i++) {
-                const r = i % 2 === 0 ? this.radius : this.radius * 0.4;
-                ctx.lineTo(r * Math.cos(i * Math.PI / 5), r * Math.sin(i * Math.PI / 5));
-            }
-            ctx.closePath();
+
+            // 塗りつぶし（ダメージ中は白、通常は黒）
+            ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+            ctx.fill();
+            ctx.stroke();
+
+            // 中心部にコアを描画（不気味な瞳の代わりにエネルギー核）
+            ctx.beginPath();
+            ctx.arc(0, 0, innerRadius * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 15;
+            ctx.fill();
+
+            // コアの中のハイライト
+            ctx.beginPath();
+            ctx.arc(0, 0, innerRadius * 0.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+
+            ctx.restore();
         } else {
-            // 通常敵（ピンク）の場合、レベル5以上では元の体を描画せず目玉のみにする
-            if (!(currentLevel >= 5 && this.type === 'normal')) {
+            // --- レベル5未満 or ミニスプリッター：従来のスキン ---
+            ctx.beginPath();
+            if (this.type === 'tank') {
+                for (let i = 0; i < 6; i++) {
+                    ctx.lineTo(this.radius * Math.cos(i * Math.PI / 3), this.radius * Math.sin(i * Math.PI / 3));
+                }
+                ctx.closePath();
+            } else if (this.type === 'speed') {
+                ctx.moveTo(0, this.radius);
+                ctx.lineTo(this.radius * 0.866, -this.radius * 0.5);
+                ctx.lineTo(-this.radius * 0.866, -this.radius * 0.5);
+                ctx.closePath();
+            } else if (this.type === 'shooter') {
+                for (let i = 0; i < 8; i++) {
+                    const r = i % 2 === 0 ? this.radius : this.radius * 0.7;
+                    ctx.lineTo(r * Math.cos(i * Math.PI / 4), r * Math.sin(i * Math.PI / 4));
+                }
+                ctx.closePath();
+            } else if (this.type === 'splitter' || this.type === 'mini-splitter') {
+                for (let i = 0; i < 10; i++) {
+                    const r = i % 2 === 0 ? this.radius : this.radius * 0.4;
+                    ctx.lineTo(r * Math.cos(i * Math.PI / 5), r * Math.sin(i * Math.PI / 5));
+                }
+                ctx.closePath();
+            } else {
                 ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
             }
-        }
 
-        ctx.shadowBlur = currentLevel >= 5 ? 25 : 15; // レベル5以上はより強く発光
-        ctx.shadowColor = this.damageFlash > 0 ? '#fff' : this.color;
-
-        ctx.strokeStyle = this.damageFlash > 0 ? '#fff' : this.color;
-        ctx.lineWidth = currentLevel >= 5 ? 5 : 3; // レベル5以上は輪郭を太く
-        ctx.stroke();
-
-        ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
-        ctx.fill();
-
-        // 強化レベル(Lv5+)に応じて「ナッツ型の瞳を持つ一つ目」を描画
-        if (currentLevel >= 5 && this.type === 'normal') {
-            const w = this.radius * 1.4;
-            const h = this.radius * 0.9;
-            
-            // プレイヤーの方向を計算して瞳をわずかにずらす（凝視エフェクト）
-            const angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
-            const pupilOffset = 3 * gameScale;
-            const px = Math.cos(angleToPlayer) * pupilOffset;
-            const py = Math.sin(angleToPlayer) * pupilOffset;
-
-            // 目玉の本体（ナッツ型/横長の楕円）
-            ctx.beginPath();
-            ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
-            ctx.fillStyle = '#f00';
             ctx.shadowBlur = 15;
-            ctx.shadowColor = '#f00';
-            ctx.fill();
-            
-            // 瞳孔（ナッツ型・縦長の楕円）
-            ctx.beginPath();
-            ctx.ellipse(px, py, w * 0.4, h * 0.8, 0, 0, Math.PI * 2);
-            ctx.fillStyle = '#111';
-            ctx.shadowBlur = 0;
+            ctx.shadowColor = this.damageFlash > 0 ? '#fff' : this.color;
+            ctx.strokeStyle = this.damageFlash > 0 ? '#fff' : this.color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
             ctx.fill();
 
-            // 瞳孔の中にさらに細いスリット（爬虫類のような瞳）
-            ctx.beginPath();
-            ctx.ellipse(px, py, w * 0.1, h * 0.6, 0, 0, Math.PI * 2);
-            ctx.fillStyle = '#000';
-            ctx.fill();
-
-            // ハイライト
-            ctx.beginPath();
-            ctx.arc(px - w * 0.4, py - h * 0.4, w * 0.15, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.fill();
-            
-            // 血管・筋肉のような筋
-            ctx.strokeStyle = '#a00';
-            ctx.lineWidth = 1;
-            for(let i = 0; i < 4; i++) {
-                const side = i < 2 ? 1 : -1;
-                ctx.beginPath();
-                ctx.moveTo(side * w * 0.6, 0);
-                ctx.quadraticCurveTo(side * w, side * h, side * w * 0.9, 0);
-                ctx.stroke();
-            }
-        } else if (currentLevel >= 5 && this.type !== 'mini-splitter') {
-            // 他の敵種の場合は従来通り上に目を重ねる
-            const eyeSize = this.radius * 0.8;
-            const angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
-            const pupilOffset = 2 * gameScale;
-            const px = Math.cos(angleToPlayer) * pupilOffset;
-            const py = Math.sin(angleToPlayer) * pupilOffset;
-
-            ctx.beginPath();
-            ctx.arc(0, 0, eyeSize, 0, Math.PI * 2);
-            ctx.fillStyle = '#f00';
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#f00';
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.arc(px, py, eyeSize * 0.6, 0, Math.PI * 2);
-            ctx.fillStyle = '#111';
-            ctx.fill();
-        }
-
-        if (this.damageFlash > 0) this.damageFlash--;
-
-        if (this.type === 'normal') {
-            // レベル5以上でピンクの模様（十字のライン）を消す
-            if (!(currentLevel >= 5)) {
+            // 通常の模様描画 (normalかつLv5未満のみ)
+            if (this.type === 'normal') {
                 ctx.beginPath();
                 ctx.moveTo(-this.radius, 0); ctx.lineTo(this.radius, 0);
                 ctx.moveTo(0, -this.radius); ctx.lineTo(0, this.radius);
                 ctx.stroke();
             }
         }
+
+        if (this.damageFlash > 0) this.damageFlash--;
+        ctx.restore();
+
 
         ctx.restore();
     }
@@ -1368,12 +1355,13 @@ function animate(currentTime) {
         if (!isBossActive && enemySpawnTimer > enemySpawnInterval) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            // レベルに応じて出現間隔を短くする
+            // レベルに応じて出現間隔を短くして密度を上げる（以前より大幅に加速）
             const baseInterval = 1000;
-            const levelReduction = (currentLevel - 1) * 80;
+            const levelReduction = (currentLevel - 1) * 150; // 軽減量をアップ
             const bossReduction = isBossActive ? 200 : 0;
             
-            enemySpawnInterval = Math.max(250, baseInterval - levelReduction - bossReduction);
+            // 下限を80ms（秒間12.5体）まで引き下げ、圧倒的な密度を実現
+            enemySpawnInterval = Math.max(80, baseInterval - levelReduction - bossReduction);
         }
 
         // ボスの更新
