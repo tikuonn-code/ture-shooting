@@ -156,6 +156,7 @@ class Player {
         this.shotDamage = 1;
         this.pierce = false;
         this.homing = false;
+        this.superBall = false; // 新能力：スーパーボール
         this.element = 'none'; // 'flame', 'frost', 'thunder'
 
         // レーザー制御
@@ -167,7 +168,6 @@ class Player {
 
         // その他の能力
         this.magnetRange = 150 * gameScale;
-        this.speedFactor = 0.2;
 
         // シールド
         this.shieldActive = false;
@@ -228,16 +228,14 @@ class Player {
     }
 
     update(targetX, targetY, dt) {
-        // マウス/タッチされた位置を追従（現在位置から目標位置へ近づく）
-        // スムーズな移動(Lerp処理) にDelta Timeを考慮
-        this.x += (targetX - this.x) * this.speedFactor * dt;
-        this.y += (targetY - this.y) * this.speedFactor * dt;
+        // マウス/タッチされた位置を完全に追従（ダイレクト操作）
+        this.x = targetX;
+        this.y = targetY;
 
         // 画面外に出ないように制限
         if (this.x < this.width / 2) this.x = this.width / 2;
         if (this.x > canvas.width - this.width / 2) this.x = canvas.width - this.width / 2;
         if (this.y < this.height / 2) this.y = this.height / 2;
-        // 画面下部はキャンバスの高さギリギリまで移動できるようにする。
         if (this.y > canvas.height - this.height / 2) this.y = canvas.height - this.height / 2;
 
         // レーザーの状態更新
@@ -302,6 +300,8 @@ class Projectile {
 
         // 貫通機能用（既に当てた敵のIDを記録するが、今回は簡易的に衝突時に処理）
         this.hitEnemies = new Set();
+        this.bounces = 0;
+        this.maxBounces = 3;
     }
 
     draw() {
@@ -1030,8 +1030,8 @@ const POWERUPS = [
     { id: 'laser_cooldown', name: '形質変化：クイック', desc: 'レーザーの再装填時間が短縮される', maxLevel: 3 },
     { id: 'shield', name: 'ハニカムシールド', desc: '敵とぶつかった際に身代わりになってくれるバリア', maxLevel: 1 },
     { id: 'magnet', name: 'マグネット', desc: '経験値を引き寄せる範囲が広くなる', maxLevel: 1 },
-    { id: 'speed', name: 'オーバードライブ', desc: '自機の移動速度が上がり、機敏に動ける', maxLevel: 1 },
     { id: 'homing', name: 'ホーミング弾', desc: '通常弾が近くの敵に向かって自動追尾する', maxLevel: 1 },
+    { id: 'super_ball', name: 'スーパーボール', desc: '弾が敵に当たると、別の敵に向かって跳ね返る', maxLevel: 1 },
 ];
 
 let playerPowerUps = {}; // { 'fire_rate': 1, 'twin': 1 } など取得済みレベルを管理
@@ -1284,8 +1284,8 @@ function applyPowerUp(id) {
         case 'laser_cooldown': player.laserCooldown = Math.max(500, player.laserCooldown - 800); break;
         case 'shield': player.shieldActive = true; break;
         case 'magnet': player.magnetRange += 100; break;
-        case 'speed': player.speedFactor = Math.min(1.0, player.speedFactor + 0.1); break;
         case 'homing': player.homing = true; break;
+        case 'super_ball': player.superBall = true; break;
     }
 
     // 初回レベルアップ（ゲーム開始時のボーナスボーナス後）の特別なリセット処理
@@ -1326,8 +1326,8 @@ function animate(currentTime) {
     if (deltaTime > 100) deltaTime = 16.666;
 
     // 60FPS(16.666ms)を1.0とした係数
-    // 全体的な速度を上げるため、さらに1.25倍にする
-    const dt = (deltaTime / 16.666) * 1.25;
+    // 全体的な速度を上げるため、さらに1.5倍にする
+    const dt = (deltaTime / 16.666) * 1.5;
 
     // 前のフレームを少し残して軌跡を描画する (Trail Effect)
     ctx.fillStyle = 'rgba(5, 5, 16, 0.3)'; // 完全にクリアせず少し残す
@@ -1471,7 +1471,27 @@ function animate(currentTime) {
                             }
                         }
 
-                        if (!proj.pierce) {
+                        if (player.superBall && proj.bounces < proj.maxBounces) {
+                            // 別の敵を探して跳ね返る
+                            let nextEnemy = null;
+                            let minDist = Infinity;
+                            enemies.forEach(other => {
+                                if (other !== enemy && !other.markedForDeletion && !proj.hitEnemies.has(other)) {
+                                    const d = Math.hypot(other.x - proj.x, other.y - proj.y);
+                                    if (d < minDist) { minDist = d; nextEnemy = other; }
+                                }
+                            });
+                            
+                            if (nextEnemy) {
+                                const angle = Math.atan2(nextEnemy.y - proj.y, nextEnemy.x - proj.x);
+                                const speed = Math.hypot(proj.velocity.x, proj.velocity.y);
+                                proj.velocity.x = Math.cos(angle) * speed;
+                                proj.velocity.y = Math.sin(angle) * speed;
+                                proj.bounces++;
+                            } else {
+                                if (!proj.pierce) proj.markedForDeletion = true;
+                            }
+                        } else if (!proj.pierce) {
                             proj.markedForDeletion = true;
                         }
                     }
