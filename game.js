@@ -108,6 +108,9 @@ function resizeCanvas() {
     gameScale = h / 900;
     if (w < 800) {
         gameScale *= 1.2; // スマホでは少しだけ拡大して見やすくする
+    } else {
+        // PCなどの大画面では敵を大きくして迫力を出す
+        gameScale *= 1.5;
     }
 
     // プレイエリアの幅を決定
@@ -409,11 +412,16 @@ class Enemy {
                 this.expValue = 1;
                 break;
             default: // normal
-                this.radius = (Math.random() * 10 + 20) * gameScale;
+                this.radius = (Math.random() * 8 + 18) * gameScale;
                 this.color = '#f0f';
                 this.hp = 2;
                 this.speedMultiplier = 1.0;
                 this.expValue = 1;
+        }
+
+        // PC（大画面）の場合はさらにサイズを補正して大きくする
+        if (window.innerWidth >= 800) {
+            this.radius *= 1.2;
         }
 
         this.x = x || Math.random() * (canvas.width - this.radius * 2) + this.radius;
@@ -914,8 +922,8 @@ class Particle {
         this.velocity.y *= currentFriction;
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
-        // 徐々に透明にする
-        this.alpha -= 0.02 * dt;
+        // 徐々に透明にする（消える速さをアップ：0.02 -> 0.05）
+        this.alpha -= 0.05 * dt;
         if (this.alpha <= 0) {
             this.markedForDeletion = true;
         }
@@ -1134,8 +1142,8 @@ function checkCollision(obj1, obj2) {
 }
 
 // 爆発エフェクト生成
-function createExplosion(x, y, color) {
-    const pCount = isBossActive ? 25 : 15;
+function createExplosion(x, y, color, customCount = null) {
+    const pCount = customCount !== null ? customCount : (isBossActive ? 25 : 15);
     for (let i = 0; i < pCount; i++) {
         particles.push(new Particle(x, y, color));
     }
@@ -1424,6 +1432,9 @@ function animate(currentTime) {
 
                         // 敵にダメージ
                         enemy.takeDamage(proj.damage);
+                        
+                        // ヒットエフェクト（早く消える小さな破片）
+                        createExplosion(proj.x, proj.y, '#fff', 3);
 
                         // 属性効果
                         if (proj.element === 'flame') {
