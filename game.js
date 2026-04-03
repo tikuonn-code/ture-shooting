@@ -663,8 +663,12 @@ class Enemy {
         }
         if (this.isFrozen > 0) this.isFrozen -= dt;
 
-        if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
-            this.velocity.x *= -1;
+        if (this.x - this.radius < 0) {
+            this.x = this.radius;
+            this.velocity.x = Math.abs(this.velocity.x);
+        } else if (this.x + this.radius > canvas.width) {
+            this.x = canvas.width - this.radius;
+            this.velocity.x = -Math.abs(this.velocity.x);
         }
 
         if (this.y > canvas.height + this.radius) {
@@ -781,8 +785,14 @@ class Boss {
 
         // 左右に移動
         this.x += this.velocity.x * dt;
-        if (this.x < this.width/2 + 20 || this.x > canvas.width - this.width/2 - 20) {
-            this.velocity.x *= -1;
+        const leftBound = this.width / 2 + 20;
+        const rightBound = canvas.width - this.width / 2 - 20;
+        if (this.x < leftBound) {
+            this.x = leftBound;
+            this.velocity.x = Math.abs(this.velocity.x);
+        } else if (this.x > rightBound) {
+            this.x = rightBound;
+            this.velocity.x = -Math.abs(this.velocity.x);
         }
 
         // 攻撃パターン
