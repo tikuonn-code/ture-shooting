@@ -1410,7 +1410,7 @@ function animate(currentTime) {
                     eproj.markedForDeletion = true;
                     createExplosion(player.x, player.y, '#0f0');
                 } else {
-                    triggerGameOver();
+                    gameOver();
                 }
             }
         });
@@ -1428,7 +1428,7 @@ function animate(currentTime) {
                     enemy.takeDamage(10); // 敵に大ダメージ
                     createExplosion(player.x, player.y, '#0f0'); // シールド破壊エフェクト
                 } else {
-                    triggerGameOver();
+                    gameOver();
                 }
             }
 
@@ -1575,7 +1575,7 @@ function animate(currentTime) {
                     boss.takeDamage(5);
                     createExplosion(player.x, player.y, '#0f0');
                 } else {
-                    triggerGameOver();
+                    gameOver();
                 }
             }
 
