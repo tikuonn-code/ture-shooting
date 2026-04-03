@@ -1311,14 +1311,17 @@ function saveUnlockedPowerup(id) {
 }
 
 // ゲームオーバー処理
-function triggerGameOver() {
+function gameOver() {
     isGameOver = true;
     isPlaying = false;
+    cancelAnimationFrame(animationId);
+
+    // 背景を赤くする
+    document.getElementById('game-container').classList.add('game-over-bg');
+
     finalScore.innerText = score;
     createExplosion(player.x, player.y, player.color); // 自機の爆発
-    setTimeout(() => {
-        gameOverScreen.classList.add('active');
-    }, 1000); // 1秒遅延
+    gameOverScreen.classList.add('active');
 }
 
 function animate(currentTime) {

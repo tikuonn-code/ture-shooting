@@ -26,6 +26,17 @@ html {
     justify-content: center;
     align-items: center;
     background: radial-gradient(circle at center, #111122 0%, #000005 100%);
+    transition: background 1s ease;
+}
+
+#game-container.game-over-bg {
+    background: radial-gradient(circle at center, #440000 0%, #110000 100%);
+    animation: gameOverPulse 2s infinite alternate;
+}
+
+@keyframes gameOverPulse {
+    from { background: radial-gradient(circle at center, #440000 0%, #110000 100%); }
+    to { background: radial-gradient(circle at center, #660000 0%, #220000 100%); }
 }
 
 canvas {
