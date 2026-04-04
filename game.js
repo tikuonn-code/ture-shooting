@@ -1097,6 +1097,8 @@ window.addEventListener('touchstart', (e) => {
 
 function init() {
     resizeCanvas();
+    // 背景演出をリセット
+    document.getElementById('game-container').classList.remove('game-over-bg');
     player = new Player();
     projectiles = [];
     enemies = [];
