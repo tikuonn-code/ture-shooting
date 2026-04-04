@@ -300,47 +300,47 @@ p {
 
 /* 基本ボタン設定 */
 button {
-    padding: 15px 50px;
-    font-size: 1.5rem;
-    font-weight: bold;
+    padding: 18px 60px;
+    font-size: 1.8rem;
+    font-weight: 900;
     color: #fff;
     background: transparent;
-    border: 3px solid #0ff;
+    border: 4px solid #0ff;
     border-radius: 50px;
     cursor: pointer;
-    box-shadow: 0 0 15px #0ff inset, 0 0 20px #0ff;
-    transition: all 0.2s ease-out;
+    box-shadow: 0 0 20px #0ff inset, 0 0 25px rgba(0, 255, 255, 0.6);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    position: relative; /* 基本は相対 */
+    letter-spacing: 3px;
+    position: relative;
     display: inline-flex;
     justify-content: center;
     align-items: center;
 }
 
 button:hover {
-    background: rgba(0, 255, 255, 0.15);
-    box-shadow: 0 0 25px #0ff inset, 0 0 40px #0ff;
-    transform: scale(1.05);
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 30px #0ff inset, 0 0 50px #0ff;
+    transform: scale(1.08);
 }
 
 button:active {
-    transform: scale(0.95);
-    box-shadow: 0 0 10px #0ff inset, 0 0 15px #0ff;
+    transform: scale(0.92);
+    box-shadow: 0 0 15px #0ff inset, 0 0 20px #0ff;
 }
 
-/* セカンダリボタン（POWER-UPS等） */
+/* セカンダリボタン（サブメニュー等） */
 .secondary-btn {
-    padding: 10px 30px;
-    font-size: 1.2rem;
+    padding: 12px 40px;
+    font-size: 1.4rem;
     border-color: #f0f;
     color: #f0f;
-    box-shadow: 0 0 10px #f0f inset, 0 0 15px #f0f;
+    box-shadow: 0 0 15px #f0f inset, 0 0 20px rgba(255, 0, 255, 0.5);
 }
 
 .secondary-btn:hover {
-    background: rgba(255, 0, 255, 0.15);
-    box-shadow: 0 0 20px #f0f inset, 0 0 30px #f0f;
+    background: rgba(255, 0, 255, 0.2);
+    box-shadow: 0 0 25px #f0f inset, 0 0 40px #f0f;
 }
 
 /* アイコンボタン（絶対配置） */
